@@ -90,8 +90,8 @@ async def errors(request, exc):
 # never the project root itself, which holds .env, .secrets/ (Snowflake key), .git/ and source.
 from fastapi.responses import FileResponse  # noqa: E402
 
-PUBLIC_FILES = {"": "index.html", "index.html": "index.html", "style.css": "style.css"}
-PUBLIC_DIRS = ("js", "play", "control")  # add new public folders here (Agent 1 owns this list)
+PUBLIC_FILES = {"": "app/index.html", "index.html": "app/index.html", "londonfax": "index.html", "style.css": "style.css"}
+PUBLIC_DIRS = ("js", "play", "control", "app")  # add new public folders here (Agent 1 owns this list)
 
 
 def _public_file(name):
