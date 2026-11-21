@@ -1,39 +1,48 @@
 # Londonfax: Devpost submission text
 
-**Tagline:** Teletext, rebuilt as a live London travel tool. Retro on the outside, genuinely useful inside.
+**Tagline:** Teletext, rebuilt for 2026: live London transport, a 1v1 phone game, and a road-closure Control Room.
 
-**Track:** Retro Remix (Old Tech, New Tricks)
+**Track:** Retro Remix (Old Tech, New Tricks) · also entering MLH Best Use of Snowflake
 
 ## Inspiration
-Before apps, Britain checked the trains and the weather on teletext: chunky coloured text pages, found by typing a three-digit number on the TV remote. It was switched off in 2012. We wanted to bring back its look and feel, but make it something you'd actually open before leaving the house in 2026.
+Before apps, Britain checked trains and weather on teletext: chunky coloured pages found by typing a three-digit
+number on the TV remote. We rebuilt it faithfully, then asked what teletext would be if it were invented today:
+live, social and useful for decisions.
 
 ## What it does
-Londonfax is a working teletext service for getting around London, powered by live TfL data:
-- **Near Me (110):** shares your location and lists the nearest stations with walking times, bus stops and their routes, cycle hire docks and traffic cameras. Every line is clickable
-- **Live buses (150):** arrivals for any stop. Tap one nearby, or search the 5-digit code on any bus stop sign
-- **Any station (330):** search any Tube, Elizabeth line, Overground, DLR or tram station for live departures from every platform
-- **Line status (300/310):** every Tube line plus the Elizabeth line, Overground, DLR and trams, with full disruption details
-- **Cycle hire (450):** live bikes, e-bikes and free spaces at the nearest docks
-- **Traffic cameras (500–599):** the 99 TfL cameras nearest to you, each playing its latest live video clip. Press REVEAL to redraw the view as 1980s teletext block graphics
-- **Weather (400)** and the **First Year Hack schedule (199)** with a live countdown
-
-It still behaves like real teletext: type a page number and the header rolls through pages until yours "arrives", with Fastext colour keys, HOLD, REVEAL, flashing alerts and rotating subpages, on a CRT TV with a remote. It also works on a phone, and every page has a shareable link.
+- **Live London in 40 columns:** Tube, Elizabeth line, Overground, DLR and tram status; live departures for any
+  station; bus arrivals by stop code; Santander Cycles; weather; and 99 TfL traffic cameras playing live video.
+  Near Me uses your location. Everything is clickable and searchable, and it works on a phone.
+- **Game Mode (flagship):** a 1v1 London knowledge game on two phones. Both players get the same real journey and
+  secretly make 2 edits (take a bus instead, change at a different station). Times stay hidden until the reveal.
+  Every minute slower scores a point; making it faster by accident costs points. 3 rounds, then a leaderboard
+  stored in Snowflake.
+- **Control Room (flagship):** close a road and watch the simulated knock-on effect: slowed roads, extra delay and
+  a cost range, with the method and assumptions on page 803.
+- **Data Check (page 199):** freshness of every feed, and today's disruptions queried live from Snowflake.
 
 ## How we built it
-Plain HTML, CSS and JavaScript, with no build step and no API keys. We wrote a small teletext engine: a 40 × 25 grid in the eight broadcast colours, with double-height and flashing text, 2 × 3 block graphics and clickable row links, drawn on a canvas behind CRT scanlines. Live camera video plays in a layer exactly aligned to the teletext grid. Data comes from the TfL Unified API (status, arrivals, nearby stops, search, BikePoint, JamCams) and Open-Meteo. Station "hubs" like Paddington are expanded into their Tube and Elizabeth line platforms so one search shows everything.
+- **The site:** a teletext engine in plain JavaScript (40×25 grid, 8 colours, mosaic graphics, double height, Fastext) behind a FastAPI server.
+- **TfL data:** all TfL calls go through one cached client, so a room full of hackers sharing one IP doesn't exhaust the rate limit.
+- **Game Mode:** times come from TfL's Journey Planner, with a different mode filter per leg to generate real alternatives. The server validates every edit and computes every time.
+- **Control Room:** built on an open-source London traffic simulation (credited, used with permission), wrapped in our own API with ranges and honest labels.
+- **Snowflake:** a key-pair service user logs every TfL status report every 2 minutes as an audit trail, stores game results, and serves today's disruption history with SQL.
 
 ## Challenges
-- Our first version only showed cameras as block-graphic art. It looked retro but wasn't useful, so we made live video the default and moved the art behind REVEAL.
-- Making real photos readable in 8 colours. Full-colour dithering turned grey streets into rainbow noise, so we switched to brightness-only dithering with selective colour.
-- Fitting long TfL disruption notices into 38 characters with word wrap and rotating subpages.
+- Making it accurate enough to defend: we show provider data unchanged with timestamps, label simulations, give ranges instead of single numbers, and archive TfL's reports so we can prove what was shown when.
+- TfL's anonymous rate limit at a busy venue: solved with a shared cache and proxy.
+- Snowflake AI functions are blocked on trial accounts, so we used Snowflake for storage, auditing and SQL analytics instead.
+- Keeping the game skill-based: hidden times and only server-validated options.
 
 ## What we learned
-How teletext really worked, how TfL's open data fits together (stops, hubs, platforms, arrivals), geolocation in the browser, and image dithering.
+How teletext really worked, TfL's open data model (stops, hubs, platforms, journeys), Snowflake key-pair auth and
+SQL analytics, and how to coordinate three AI coding agents on one codebase.
 
 ## What's next
-Journey planning between two places, saved favourite stops, push alerts when your line is disrupted, and a Snowflake-backed archive of the day's disruptions.
+Journey planning with live disruption avoidance, alerts for your lines, a 4-player Game Mode, and AI-written
+Control Room briefings once Snowflake AI is enabled on a full account.
 
 ## Built with
-html, css, javascript, canvas, tfl-api, open-meteo, geolocation, playwright
+javascript, python, fastapi, snowflake, tfl-api, open-meteo, canvas, cloudflare-tunnel, jetbrains, claude
 
-**Credits:** Powered by TfL Open Data. Weather by Open-Meteo.com (CC BY 4.0).
+**Credits:** Road simulation adapted from t-strachota/livelondon (with the author's permission). Powered by TfL Open Data. Weather by Open-Meteo.com (CC BY 4.0).

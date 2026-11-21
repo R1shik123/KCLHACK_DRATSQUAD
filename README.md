@@ -1,71 +1,60 @@
 # Londonfax
 
-**Teletext, rebuilt as a live London travel tool.** Retro on the outside, genuinely useful inside.
+**Teletext, rebuilt for 2026.** London's transport, live, in 40 columns and 8 colours, plus two flagship modes:
 
-Built for the **Retro Remix** track at KCL Tech First Year Hack: *take something old and rebuild it for 2026.*
+- **Game Mode (page 600, `/play`)**: a 1v1 London knowledge game played on your phones. Both players get the same real journey and make 2 secret edits; every minute slower is a point, and making it faster by accident costs points. Times come from TfL's own Journey Planner.
+- **Control Room (page 800, `/control`)**: close a road and see the simulated knock-on effect on London's traffic, with every figure labelled as an estimate, costs given as ranges, and the method on page 803.
 
-Teletext (1974–2012) put news, travel and weather on every TV as pages of 40 × 25 coloured characters, chosen by typing a three-digit page number on the remote. Londonfax keeps that look and feel, and fills it with live data you can actually use to get around London today.
+Built for the **Retro Remix** track at KCL Tech First Year Hack (and MLH Best Use of Snowflake).
 
-## What you can do with it
-
-| Page | What's on it | Live source |
+## Everyday pages
+| Page | What's on it | Source |
 |---|---|---|
-| **110 Near me** | Uses your location to list the nearest stations (with walking times), bus stops and their routes, cycle hire docks, and the nearest traffic camera. Every line is clickable | TfL |
-| **150 Bus stop** | Live bus arrivals for any stop. Click one on page 110, or search the 5-digit code printed on every London bus stop sign | TfL |
-| **330 Any station** | Search any Tube, Elizabeth line, Overground, DLR or tram station for live departures from every platform | TfL |
-| 320–325 | Quick boards for Temple (KCL Strand), Embankment, Waterloo, King's Cross, Oxford Circus and Bank | TfL |
-| 300 / 310 | Status of every Tube line, plus the Elizabeth line, all six Overground lines, the DLR and trams, with full disruption details on subpages | TfL |
-| **450 Cycle hire** | The nearest Santander Cycles docks, with live bikes, e-bikes and free spaces | TfL |
-| **500–599 Traffic cameras** | The 99 TfL cameras nearest to you, each playing its latest **live video clip**. Search any road to jump to cameras there | TfL JamCams |
-| 400 | Weather now, a 12-hour chart and a 5-day forecast | Open-Meteo |
-| 101 | London now: one-page summary | all |
-| 199 | First Year Hack schedule with a live deadline countdown | built in |
+| 101 | London now: weather, Tube problems, next trains from Temple | TfL, Open-Meteo |
+| 110 | Near Me: nearest stations (walk times), bus stops, cycle docks, camera | TfL |
+| 150 | Live bus arrivals for any stop (search its 5-digit code) | TfL |
+| 199 | **Data Check**: every feed's freshness, plus today's disruptions **queried from Snowflake** | TfL, Snowflake |
+| 300 / 310 | Tube, Elizabeth line, Overground, DLR and tram status with full details | TfL |
+| 320–325, 330 | Live departures (preset stations, or any station you search) | TfL |
+| 400 | Weather (model estimate for the Strand) and 5-day forecast | Open-Meteo |
+| 450 | Santander Cycles: bikes, e-bikes and free spaces nearby | TfL |
+| 500–599 | The 99 nearest TfL traffic cameras, each with its latest live video clip (REVEAL = teletext art) | TfL JamCams |
 
-## How to use it
-- **Click anything.** Every listed station, stop, camera and page number on screen is a link. The coloured bar at the bottom is clickable too.
-- **Search** (or press `/`): a station name, a road name, or a 5-digit bus stop code.
-- **◎ Near Me** uses your phone's or laptop's location. If you decline, it uses KCL Strand.
-- **Share a page:** the address updates as you go, e.g. `#150:490008932T:Lancaster Place` reopens that bus stop.
-- **Or use it like 1985:** type a page number on the remote or keyboard and watch the header roll.
+Click any line or page number, search stations, roads or bus stop codes, use **Near Me**, or type page numbers on the remote like it's 1985.
 
-| Key | Does |
-|---|---|
-| `1`–`9`, `0` | Type a page number (100–899) |
-| `R` `G` `Y` `C` | Fastext red / green / yellow / cyan |
-| `V` | Reveal: on a camera page, swap the live video for a teletext block-graphics version |
-| `H` | Hold (stop subpages rotating) |
-| `←` `→` | Previous / next subpage |
-| `I` | Index (page 100) |
-| `/` | Jump to search |
+## Is it accurate?
+- Live data is shown exactly as TfL and Open-Meteo publish it, with its time on screen. Countdowns tick from TfL's own predictions.
+- Page 199 shows each feed's freshness. Every TfL line-status report is **archived in Snowflake every 2 minutes**, an audit trail of exactly what TfL said and when.
+- Game Mode times come from TfL's Journey Planner, plus a fixed, documented 3 minutes per change, applied equally to every route.
+- Control Room is a **simulation**: labelled SIMULATED/EST, with assumptions and ranges on page 803.
+- Approximations are stated: walking time = straight-line distance × 1.3 at 80 m/min; weather is a model estimate.
 
-## The retro part
-- A 40 × 25 grid in the 8 broadcast teletext colours, double-height and flashing text, and 2 × 3 block "mosaic" graphics
-- The header counter rolls through page numbers while your page is "found", like the real thing
-- Fastext colour keys, HOLD, REVEAL and rotating subpages
-- A CRT television and a remote you can click, with full phone support
-- REVEAL on a camera redraws the live view as teletext art, converted in the browser using auto-levels, 1-bit dithering and selective colour
+## Snowflake
+A key-pair service user (no password) writes to three tables: `LINE_STATUS` (TfL audit log), `GAME_RESULTS`
+(all-time leaderboard) and `SCENARIOS`. Page 199 and `/api/disruptions/today` query today's disruptions from it with SQL.
+Snowflake's AI functions are blocked on trial accounts, so Control Room briefings use a plain template instead.
+Setup: run `snow/setup.sql` as ACCOUNTADMIN, put `SNOWFLAKE_ACCOUNT=<org-account>` in `.env`, and keep the private key in `.secrets/`.
 
-## Run it
-No build step, no API keys, no dependencies.
-
+## Run it (hosting Mac)
 ```bash
 cd londonfax
-python3 -m http.server 8765
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python server.py                      # http://localhost:8765
+~/.local/bin/cloudflared tunnel --url http://localhost:8765   # public HTTPS link for phones
 ```
-
-Open http://localhost:8765. It's a static site, so it can go on GitHub Pages as is. Near Me needs `localhost` or HTTPS for the browser to allow location.
+Optional `.env` (never committed): `TFL_APP_KEY=` (free from api-portal.tfl.gov.uk; avoids TfL's shared rate limit) and the Snowflake settings above.
+The server publishes only `/`, `js/`, `play/`, `control/` and `/api/*`; secrets and source are never served.
+Control Room's road engine has its own setup: see `roads/README.md`.
 
 ## How it's built
-- `js/teletext.js`: the teletext engine. 40 × 25 cells, a canvas renderer (shown 4:3 with pixelated scaling and CRT scanlines), clickable row links, a picture-to-mosaic converter, and big block-graphic headlines.
-- `js/data.js`: keyless feeds with short caches. TfL Unified API (line status, arrivals, nearby stops, search, BikePoint, JamCams) and Open-Meteo. Station "hubs" such as Paddington are expanded into their Tube and Elizabeth line platforms.
-- `js/pages.js`: one builder per page, returning subpages, links and Fastext.
-- `js/app.js`: navigation, the rolling search, live video over the grid, click handling, search, Near Me, shareable links, refresh timers, remote and keyboard.
-- `demo/record_demo.py`: records the narrated demo with Playwright and Chrome, macOS `say` and ffmpeg.
+- `js/teletext.js`: 40×25 teletext engine (8 colours, double height, mosaics, clickable rows, live video layer)
+- `js/data.js`, `js/pages.js`, `js/app.js`: live feeds, pages, navigation, search, Near Me
+- `server.py`: FastAPI site + APIs; `tfl.py`: shared cached TfL client; `snow/`: Snowflake
+- `game/`, `play/`, `js/pages-game.js`: Game Mode
+- `roads/`, `control/`, `js/pages-control.js`, `vendor/livelondon/`: Control Room
 
-## Data and credits
+## Credits
+- **Road traffic simulation adapted from [t-strachota/livelondon](https://github.com/t-strachota/livelondon), used with the author's permission** (approved by the event admins).
 - Powered by TfL Open Data. Contains OS data © Crown copyright and database rights 2016, and Geomni UK Map data © and database rights 2019.
-- Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
-- Idea sparked by OxHack 2026 winner Live London, which also used TfL's live feeds. Londonfax's code is new.
-
-## Demo video
-`demo/londonfax-demo.mp4`, 1 minute 25 seconds with narration. To re-record it: start the server, then run `python demo/record_demo.py`. This needs `pip install playwright imageio-ffmpeg` and Google Chrome.
+- Weather by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
+- Built with JetBrains tools and Claude.
