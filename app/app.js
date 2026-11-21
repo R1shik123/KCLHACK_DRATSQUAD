@@ -185,7 +185,7 @@ function showGameOver(r) {
   $('res-next').innerHTML = lastNext.length ? lastNext.map((L) => `<span class="chip">${L}</span>`).join('') : '<p class="muted small">Play a longer round to get suggestions.</p>';
   $('res-learn').hidden = !lastNext.length;
   setPlayButtons(false);
-  $('overlay').innerHTML = `<p class="px big">SIGNFALL</p><p class="px">Hold the sign to fire</p><button class="btn arcade-btn" id="start" type="button">PRESS START</button>`;
+  $('overlay').innerHTML = `<p class="px big">SIGNBLAST</p><p class="px">Hold the sign to fire</p><button class="btn arcade-btn" id="start" type="button">PRESS START</button>`;
   $('overlay').hidden = false;
   location.hash = '#results';
 }
@@ -277,7 +277,7 @@ function renderProgress() {
     : '<p class="muted small">Play a few rounds to see which letters need work (needs 3+ attempts per letter).</p>';
 }
 $('reset-progress').addEventListener('click', () => {
-  if (!confirm('Reset all Signfall progress on this device?')) return;
+  if (!confirm('Reset all Signblast progress on this device?')) return;
   const muted = store.muted;
   store = blank(); store.muted = muted; save();
   game.boxes = store.boxes;

@@ -1,4 +1,4 @@
-# Signfall
+# Signblast
 
 **Learn the ASL alphabet by playing an arcade classic.** Letters fall like an arcade wave; make each letter's
 handshape at your webcam to shoot it down. Built for the **Retro Remix** track at KCL Tech First Year Hack.

@@ -1,4 +1,4 @@
-# Signfall: Devpost submission text
+# Signblast: Devpost submission text
 
 **Tagline:** Learn the ASL alphabet by playing an arcade classic: make the handshape at your webcam to shoot the falling letter.
 
@@ -40,7 +40,7 @@ falling-enemies arcade shooter, where your hand is the controller.
 
 ## Honest limits
 8 static letters only (J and Z need motion). Fingerspelling is a small part of ASL. Lighting and camera angle
-affect accuracy. Signfall complements Deaf-led teaching; it doesn't replace it.
+affect accuracy. Signblast complements Deaf-led teaching; it doesn't replace it.
 
 ## What's next
 The full alphabet including motion letters (J, Z), common words, BSL two-handed fingerspelling, and a classroom mode.
