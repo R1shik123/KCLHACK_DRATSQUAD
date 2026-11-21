@@ -96,6 +96,12 @@ _gate = {"until": 0.0}  # TfL anonymous rate limit: after a 429 we pause all cal
 async def tfl_leg(client, f, t, mode):
     url = TFL.format(f=ll_str(f), t=ll_str(t))
     params = {"mode": MODES[mode]}
+    try:  # team's free TfL app key (Agent 1's tfl.py reads it from .env): far higher rate limit
+        from tfl import app_key
+        if app_key():
+            params["app_key"] = app_key()
+    except Exception:
+        pass
     async with _sem:
         for attempt in range(ATTEMPTS):
             wait = _gate["until"] - time.time()

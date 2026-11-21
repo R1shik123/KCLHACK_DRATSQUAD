@@ -204,7 +204,7 @@ async def create_room(request: Request, body: dict = Body(default={})):
                               "history": [], "submitted": False}}}
     ROOMS[code] = room
     server = request.scope.get("server") or ("127.0.0.1", 8765)
-    asyncio.create_task(_prepare(room, f"http://127.0.0.1:{server[1]}"))
+    room["task"] = asyncio.create_task(_prepare(room, f"http://127.0.0.1:{server[1]}"))  # keep a reference
     return {"code": code, "playerId": pid}
 
 
@@ -319,7 +319,7 @@ async def next_round(code: str, body: dict = Body(...)):
             room["phase"] = "final"
             if not room["saved"]:
                 room["saved"] = True
-                asyncio.create_task(_save_results(room))
+                room["saveTask"] = asyncio.create_task(_save_results(room))
         else:
             room["round"] += 1
             _start_round(room)

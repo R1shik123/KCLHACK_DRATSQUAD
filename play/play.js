@@ -65,7 +65,7 @@
     if (!room || busy) return;
     try {
       const s = await call('GET', `/rooms/${room}/state?player=${encodeURIComponent(player)}`);
-      if (s.notInRoom) { player = ''; }
+      if (s.notInRoom) { player = ''; stopPoll(); renderJoin(s.code); return; }
       apply(s);
     } catch (e) {
       if (/No game/.test(e.message)) { toast('That game has ended.'); forget(); }
@@ -271,7 +271,6 @@
         <div class="big-emoji" aria-hidden="true">🔒</div>
         <h1>Route locked in</h1>
         <p class="muted center">Waiting for the others. The reveal starts when everyone submits or the timer runs out.</p>
-        ${playersList(false).replace(/<li class="(me|)"><span class="dot"><\/span>/g, '<li class="$1"><span class="dot"></span>')}
         <ul class="players status">${state.players.map((p) => `<li><span class="pname">${esc(p.name)}</span><span>${p.submitted ? '✅ Submitted' : '✏️ Editing…'}</span></li>`).join('')}</ul>
       </section>`;
   }
