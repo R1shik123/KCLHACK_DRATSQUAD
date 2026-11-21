@@ -98,7 +98,7 @@ export class Recognizer {
       if (!this.landmarker) {
         const { FilesetResolver, HandLandmarker } = await import(`${TASKS}/vision_bundle.mjs`);
         const files = await FilesetResolver.forVisionTasks(`${TASKS}/wasm`);
-        const opts = (delegate) => ({ baseOptions: { modelAssetPath: MODEL, delegate }, runningMode: 'VIDEO', numHands: 1,
+        const opts = (delegate) => ({ baseOptions: { modelAssetPath: MODEL, delegate }, runningMode: 'VIDEO', numHands: 2,
           minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5 });
         try { this.landmarker = await HandLandmarker.createFromOptions(files, opts('GPU')); this.delegate = 'GPU'; }
         catch { this.landmarker = await HandLandmarker.createFromOptions(files, opts('CPU')); this.delegate = 'CPU'; }
@@ -127,8 +127,14 @@ export class Recognizer {
       this.lastTime = v.currentTime;
       let res = null;
       try { res = this.landmarker.detectForVideo(v, performance.now()); } catch { res = null; }
-      const lm = res?.landmarks?.[0] || null;
-      const out = lm ? classify(lm) : { letter: null, guess: null, confidence: 0 };
+      // Up to two hands: classify each and keep the most confident letter, so either hand works.
+      // Features are distance ratios, so left and right hands need no mirroring.
+      let lm = null, out = { letter: null, guess: null, confidence: 0 };
+      for (const hand of res?.landmarks || []) {
+        const c = classify(hand);
+        const better = !lm || (c.letter && !out.letter) || (!!c.letter === !!out.letter && c.confidence > out.confidence) || (!c.letter && !out.letter && c.distance < out.distance);
+        if (better) { lm = hand; out = c; }
+      }
       if (out.letter && out.letter === this.lastLetter) this.run++;
       else { this.run = out.letter ? 1 : 0; this.lastLetter = out.letter; }
       const fire = out.letter && (this.run === STABLE_FRAMES || (this.run > STABLE_FRAMES && (this.run - STABLE_FRAMES) % REARM_FRAMES === 0));
