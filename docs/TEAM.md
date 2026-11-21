@@ -40,13 +40,17 @@ existing pages, integration, demo). **Agent 2** builds the road-traffic engine a
 
 Need a change in someone else's file? Ask the owner (through the human) with the exact change.
 
-## Git workflow (all three agents share ONE project folder)
-Everyone works in the same IntelliJ / JetBrains Air project, so the working copy is shared:
-- **Stay on `main`. Never** run `git checkout`/`switch` (to another branch), `stash`, `reset`, `clean`,
-  `rebase` or `restore` on paths you don't own. They change files under the other agents' feet.
+## Git workflow
+Repo: **https://github.com/R1shik123/KCLHACK_DRATSQUAD** (branch `main`). Agents 2 and 3 share one
+IntelliJ / JetBrains Air project folder on one laptop; Agent 1 works in its own clone on the hosting Mac.
+- **Stay on `main`. Never** run `git checkout`/`switch` (to another branch), `stash`, `reset --hard`,
+  `clean` or `restore` on paths you don't own. In a shared folder they change files under the other agent's feet.
 - **Commit only your own paths:** `git add game/ play/ js/pages-game.js && git commit -m "..."`.
   Never `git add -A`, `git add .` or `git commit -a`.
-- Commit small and often, with clear messages ("game: reveal screen"). Agent 1 pushes to GitHub.
+- **Push your commits** so the hosting Mac can pull them, at least every 30 minutes and at 16:20:
+  `git pull --rebase --autostash origin main && git push origin main`. If the push is rejected, run the same command once more. **Never force-push.**
+- Leave `src/Main.java`, `.idea/` and `KCLHACK_DRATSQUAD.iml` (the original IntelliJ project files) alone.
+- Commit small and often, with clear messages ("game: reveal screen").
 - Never commit `.env`, `.secrets/`, `.venv/`, `node_modules/`, `vendor/livelondon/data/` or anything with a key in it (`.gitignore` covers these; check `git status` before committing).
 - Shared Python environment: use the existing `.venv` and only *add* packages (`.venv/bin/pip install x`), never recreate it. Record any package you add in `requirements.txt` (Agent 1 owns it; tell Agent 1).
 - **Ports on this machine:** Agent 1's main server 8765 · Agent 2 dev server 8766 and road engine 3000 · Agent 3 dev server 8767.

@@ -2,6 +2,7 @@
 
 Paste the **master prompt** first, then that agent's **individual prompt**, in the same message.
 Agent 1 (hosting, Snowflake, integration, demo) is already running on the hosting Mac.
+Repo: https://github.com/R1shik123/KCLHACK_DRATSQUAD (open it in IntelliJ / JetBrains Air and `git pull` first).
 
 ---
 
@@ -22,9 +23,10 @@ competition rules, file ownership, shared APIs, ports and git rules. Then read y
 Non-negotiables:
 1. Competition rules: you are running in JetBrains Air (required). All work happens today. Follow the MLH
    Code of Conduct. Reused code must be credited (Agent 1 writes the README credit).
-2. Shared working copy: all three agents edit the SAME project folder. Stay on main. Never run git
-   checkout/switch to another branch, stash, reset, clean, rebase or restore. Never git add -A, git add . or
-   git commit -a. Commit only your own paths with an explicit `git add <your paths>`. Don't push; Agent 1 pushes.
+2. Shared working copy: Agents 2 and 3 edit the SAME project folder. Stay on main. Never run git
+   checkout/switch to another branch, stash, reset --hard, clean or restore. Never git add -A, git add . or
+   git commit -a. Commit only your own paths with an explicit `git add <your paths>`, then push them:
+   `git pull --rebase --autostash origin main && git push origin main` (never force-push).
 3. Only edit files you own (listed in TEAM.md). If you need a change anywhere else, put the exact change
    in your status message so the human can pass it on.
 4. Never commit or print secrets (.env, .secrets/, API keys). Never use keys you find in someone else's files.
