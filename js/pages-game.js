@@ -121,7 +121,7 @@
       p.route.legs.forEach((l) => {
         const m = (l.parts && l.parts[0] && l.parts[0].mode) || l.mode;
         s.text(r, 2, (MODE_TAG[m] || 'GO').padEnd(5), { fg: MODE_FG[m] || 'W' });
-        s.text(r, 7, cut(`${l.label}: ${l.from}>${l.to}`, 27), { fg: 'W' });
+        s.text(r, 7, cut(l.label, 27), { fg: "W" });
         s.right(r, `${l.minutes}M`, { fg: 'Y' });
         r += 1;
       });

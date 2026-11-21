@@ -111,25 +111,26 @@ def describe(j, r, table, with_times):
 
 
 def why(j, base, r, table):
-    """One line explaining the biggest difference from the original route."""
+    """One line explaining how this route differs from the original."""
     if r == base:
-        return "No edits: same route, same time."
-    best = None
+        return "Back on the original route: same time."
+    diffs = []
     for i in range(len(j["legs"])):
         a, b = table.get(leg_key(j, base, i)), table.get(leg_key(j, r, i))
-        if not a or not b:
-            continue
-        d = b["minutes"] - a["minutes"]
-        if best is None or abs(d) > abs(best[0]):
-            best = (d, i, a, b)
-    if best is None:
-        return ""
-    d, i, a, b = best
+        if a and b and (r["modes"][i] != base["modes"][i] or leg_key(j, r, i) != leg_key(j, base, i)):
+            diffs.append((b["minutes"] - a["minutes"], i, a, b))
     moved = [stop(j, si, r["stops"][si])["name"] for si in range(1, len(j["stops"]) - 1) if r["stops"][si] != base["stops"][si]]
-    word = "slower" if d > 0 else "faster"
-    if d == 0:
-        return "Your changes cancelled out: same time overall." if moved else f"{b['label']} takes the same time as {a['label']} here."
-    if moved and b["label"] == a["label"]:
-        return f"Changing at {moved[0]} makes leg {i + 1} {abs(d)} min {word}."
-    where = f" (changing at {moved[0]})" if moved else ""
-    return f"{b['label']} is {abs(d)} min {word} than {a['label']} on leg {i + 1}{where}."
+    if not diffs:
+        return ""
+    total = sum(d for d, *_ in diffs)
+    if len(diffs) == 1:
+        d, i, a, b = diffs[0]
+        word = "slower" if d > 0 else "faster"
+        if d == 0:
+            return f"{b['label']} takes the same time as {a['label']} on leg {i + 1}."
+        if moved and b["label"] == a["label"]:
+            return f"Changing at {moved[0]} makes leg {i + 1} {abs(d)} min {word}."
+        return f"{b['label']} is {abs(d)} min {word} than {a['label']} on leg {i + 1}."
+    parts = ", ".join(f"leg {i + 1} {'+' if d > 0 else ''}{d} min ({b['label']})" for d, i, a, b in diffs)
+    lead = f"Changing at {moved[0]}: " if moved else ""
+    return f"{lead}{parts}. Net {'+' if total > 0 else ''}{total} min."

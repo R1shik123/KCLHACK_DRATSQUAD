@@ -6,7 +6,8 @@
   const app = $('app');
   const params = new URLSearchParams(location.search);
   let room = (params.get('room') || localStorage.getItem('lf.room') || '').toUpperCase();
-  let player = room ? (localStorage.getItem('lf.player.' + room) || '') : '';
+  let player = room ? (params.get('player') || localStorage.getItem('lf.player.' + room) || '') : '';
+  if (room && params.get('player')) { try { localStorage.setItem('lf.player.' + room, player); localStorage.setItem('lf.room', room); } catch (e) { /* private mode */ } }
   let state = null, lastSig = '', pollTimer = null, busy = false, endsAt = 0;
 
   const LINE = {
@@ -216,8 +217,12 @@
     app.querySelectorAll('[data-leg]').forEach((b) => (b.onclick = () => openLeg(+b.dataset.leg)));
     app.querySelectorAll('[data-change]').forEach((b) => (b.onclick = () => openChange(+b.dataset.change)));
     $('undo').onclick = () => act('undo');
-    $('submit').onclick = () => {
-      if (s.you.editsLeft === s.editsPerRound && !confirm('Submit without any edits? You will score 0 this round.')) return;
+    $('submit').onclick = (ev) => {
+      const b = ev.currentTarget;
+      if (s.you.editsLeft === s.editsPerRound && !b.dataset.sure) {
+        b.dataset.sure = '1'; b.textContent = 'No edits: tap again to submit';
+        return;
+      }
       act('submit');
     };
   }
