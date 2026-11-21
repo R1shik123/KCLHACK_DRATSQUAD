@@ -127,3 +127,26 @@ def leaderboard(limit=10):
         "from game_results group by player order by points desc limit %s",
         (limit,),
     )
+
+
+def save_round(r):
+    """Signblast: one row per finished round (per-letter hits, misses and sign times as VARIANT). No-op without Snowflake."""
+    if not configured():
+        return False
+    query("create table if not exists signblast_rounds (played_at timestamp_tz default current_timestamp(), "
+          "score int, level int, practice int, accuracy float, avg_ms float, early boolean, letters variant)")
+    query("insert into signblast_rounds(score, level, practice, accuracy, avg_ms, early, letters) "
+          "select %s, %s, %s, %s, %s, %s, parse_json(%s)",
+          (r.get("score"), r.get("level"), r.get("practice"), r.get("accuracy"), r.get("avg_ms"), bool(r.get("early")),
+           json.dumps(r.get("letters") or {})))
+    return True
+
+
+def hardest_letters(limit=5):
+    """Across every player's rounds: letters with the most misses per attempt (Snowflake flattens the VARIANT)."""
+    return query(
+        "select f.key as letter, sum(f.value:misses::int) as misses, sum(f.value:hits::int) as hits, "
+        "round(sum(f.value:misses::int) / nullif(sum(f.value:hits::int) + sum(f.value:misses::int), 0), 3) as miss_rate "
+        "from signblast_rounds, lateral flatten(input => letters) f group by 1 order by miss_rate desc nulls last limit %s",
+        (limit,),
+    )

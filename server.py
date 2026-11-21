@@ -11,7 +11,7 @@ import contextlib
 import os
 import sys
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -38,6 +38,23 @@ def health():
 
 
 app.include_router(snow_api.router)
+
+
+@app.post("/api/rounds")
+async def save_round(request: Request):
+    """Signblast round analytics -> Snowflake table SIGNBLAST_ROUNDS."""
+    body = await request.json()
+    try:
+        ok = await asyncio.to_thread(snow.save_round, body)
+        return {"saved": ok}
+    except Exception as e:  # never break the game over analytics
+        return JSONResponse({"saved": False, "error": str(e)[:200]}, status_code=200)
+
+
+@app.get("/api/rounds/hardest")
+async def hardest():
+    rows = await asyncio.to_thread(snow.hardest_letters)
+    return {"rows": rows}
 
 # Browser pages fetch TfL through here, so the venue's shared IP doesn't exhaust TfL's anonymous limit:
 # one cached upstream request serves every phone and page, with the team's app key added.

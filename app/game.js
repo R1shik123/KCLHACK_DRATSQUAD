@@ -2,10 +2,24 @@
  * Learning loop: chunked letter introduction, Leitner-box weighted spawning, adaptive speed,
  * fading handshape hints, combo multiplier, 3 lives. */
 
-export const LEVEL_LETTERS = [['A', 'B', 'L'], ['A', 'B', 'L', 'V', 'Y'], ['A', 'B', 'L', 'V', 'Y', 'I', 'C', 'D']];
+// The whole ASL alphabet, chunked by handshape difficulty, then fingerspelled words.
+export const LEVELS = [
+  { name: 'Starter shapes', letters: [...'ABCDILVY'] },
+  { name: 'Open hands', letters: [...'FUWKRXO'] },
+  { name: 'Fists + sideways', letters: [...'ESTMNGHPQJZ'] },
+  { name: 'Speed: A to Z', letters: [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'], speed: 8 },
+  { name: 'Words', words: ['HI', 'NO', 'YES', 'BYE', 'CAT', 'DOG', 'SUN', 'FUN', 'WOW', 'LOVE', 'HELP', 'COOL', 'NAME', 'KIND', 'PLAY', 'SIGN'] },
+];
+// Cumulative pools for a full run (level n includes everything before it).
+export const LEVEL_LETTERS = LEVELS.map((l, i) => (l.words ? l.words : [...new Set(LEVELS.slice(0, i + 1).flatMap((x) => x.letters))]));
 export const HINTS = {
   A: 'FIST, THUMB AT SIDE', B: 'FLAT HAND, THUMB IN', C: 'CURVE INTO A C', D: 'INDEX UP, O BELOW',
   I: 'FIST, PINKY UP', L: 'THUMB + INDEX = L', V: 'TWO FINGERS, SPREAD', Y: 'THUMB + PINKY OUT',
+  E: 'FINGERS CURL ON THUMB', F: 'OK SIGN, 3 UP', G: 'INDEX POINTS SIDEWAYS', H: '2 FINGERS SIDEWAYS',
+  J: 'I + DRAW A J', K: 'V WITH THUMB BETWEEN', M: 'THUMB UNDER 3 FINGERS', N: 'THUMB UNDER 2 FINGERS',
+  O: 'FINGERTIPS MAKE O', P: 'K POINTING DOWN', Q: 'G POINTING DOWN', R: 'CROSS 2 FINGERS',
+  S: 'FIST, THUMB ACROSS', T: 'THUMB UNDER INDEX', U: '2 FINGERS TOGETHER', W: '3 FINGERS SPREAD',
+  X: 'HOOK THE INDEX', Z: 'INDEX DRAWS A Z',
 };
 const BOX_WEIGHT = [0, 3, 2, 1.4, 1, 1];      // Leitner box 1..5
 const HINT_ALPHA = [0, 1, 0.75, 0.45, 0.2, 0];  // hint strength by box (scaffolding fades)
@@ -28,12 +42,14 @@ export class Game {
     this.drawIdle();
   }
 
-  start() {
+  /** level: 1..5 to start at; lock: stay on that level (level practice) instead of advancing. */
+  start(level = 1, lock = false) {
+    this.lock = lock;
     Object.assign(this, {
-      state: 'play', score: 0, level: 1, lives: 3, combo: 0, best: 0, levelHits: 0,
-      speed: 14, enemies: [], shots: [], particles: [], flash: null, spawnIn: 0.6,
+      state: 'play', score: 0, level, lives: 3, combo: 0, best: 0, levelHits: 0,
+      speed: 14 + (level - 1) * 3 + (LEVELS[level - 1].speed || 0), enemies: [], shots: [], particles: [], flash: null, spawnIn: 0.6,
       recent: [], stats: {}, reactions: [], hits: 0, escapes: 0, last: performance.now(), cannonX: W / 2, cannonTo: W / 2,
-      message: { text: 'LEVEL 1', t: 1.6 },
+      message: { text: lock ? `PRACTICE: ${LEVELS[level - 1].name.toUpperCase()}` : `LEVEL ${level}`, t: 1.6 },
     });
     this.hud();
     cancelAnimationFrame(this.raf);
@@ -57,17 +73,20 @@ export class Game {
     this.raf = requestAnimationFrame(this._tick);
   }
 
-  get letters() { return LEVEL_LETTERS[this.level - 1]; }
+  get letters() { return this.lock ? (LEVELS[this.level - 1].words || LEVELS[this.level - 1].letters) : LEVEL_LETTERS[this.level - 1]; }
+  get wordLevel() { return !!LEVELS[this.level - 1].words; }
   box(L) { return this.boxes[L] || 1; }
   stat(L) { return (this.stats[L] ||= { hits: 0, misses: 0, times: [] }); }
 
   pickLetter() {
-    const onScreen = new Set(this.enemies.map((e) => e.letter));
+    const onScreen = new Set(this.enemies.map((e) => e.word || e.letter));
     const pool = this.letters.filter((L) => !onScreen.has(L));
     const list = pool.length ? pool : this.letters;
-    const total = list.reduce((s, L) => s + BOX_WEIGHT[this.box(L)], 0);
+    // Leitner weighting; a word is weighted by its weakest letter.
+    const wt = (w) => Math.max(...[...w].map((L) => BOX_WEIGHT[this.box(L)]));
+    const total = list.reduce((s, L) => s + wt(L), 0);
     let r = Math.random() * total;
-    for (const L of list) { r -= BOX_WEIGHT[this.box(L)]; if (r <= 0) return L; }
+    for (const L of list) { r -= wt(L); if (r <= 0) return L; }
     return list[list.length - 1];
   }
 
@@ -77,7 +96,8 @@ export class Game {
     const used = new Set(this.enemies.filter((e) => e.y < 60).map((e) => e.lane));
     const free = [...Array(lanes).keys()].filter((i) => !used.has(i));
     const lane = free.length ? free[Math.floor(Math.random() * free.length)] : Math.floor(Math.random() * lanes);
-    this.enemies.push({ letter: L, lane, x: 10 + lw * lane + lw / 2, y: -20, born: performance.now(), wob: Math.random() * 6, color: PAL.block[Math.floor(Math.random() * PAL.block.length)] });
+    const word = L.length > 1 ? L : null;
+    this.enemies.push({ word, idx: 0, letter: L[0], lane, x: 10 + lw * lane + lw / 2, y: -20, born: performance.now(), wob: Math.random() * 6, color: PAL.block[Math.floor(Math.random() * PAL.block.length)] });
   }
 
   /** A sign was held. Shoot the lowest matching letter, if any. */
@@ -86,6 +106,16 @@ export class Game {
     const targets = this.enemies.filter((e) => e.letter === letter && !e.dead).sort((a, b) => b.y - a.y);
     const t = targets[0];
     if (!t) { this.message = { text: `NO ${letter} ON SCREEN`, t: 0.9 }; this.sound?.('nope'); return; }
+    const reactionNow = performance.now() - t.born;
+    if (t.word && t.idx < t.word.length - 1) {   // fingerspelling a word: advance to its next letter
+      t.idx++; t.letter = t.word[t.idx]; t.born = performance.now();
+      this.reactions.push(reactionNow);
+      this.stat(letter).hits++; this.stat(letter).times.push(reactionNow);
+      this.boxes[letter] = Math.min(5, this.box(letter) + 1);
+      this.score += 25; this.cannonTo = t.x; this.shots.push({ x: t.x, y: t.y, t: 0.1 });
+      this.sound?.('hit'); this.hud();
+      return;
+    }
     t.dead = true;
     this.cannonTo = t.x;
     this.shots.push({ x: t.x, y: t.y, t: 0.18 });
@@ -101,10 +131,10 @@ export class Game {
     this.outcome(true);
     this.burst(t.x, t.y, t.color);
     this.sound?.('hit');
-    if (this.levelHits >= HITS_PER_LEVEL && this.level < 3) {
+    if (!this.lock && this.levelHits >= HITS_PER_LEVEL && this.level < LEVELS.length) {
       this.level++; this.levelHits = 0;
-      const added = LEVEL_LETTERS[this.level - 1].filter((L) => !LEVEL_LETTERS[this.level - 2].includes(L));
-      this.message = { text: `LEVEL ${this.level}  NEW: ${added.join(' ')}`, t: 2.2 };
+      this.speed += 3 + (LEVELS[this.level - 1].speed || 0);
+      this.message = { text: `LEVEL ${this.level}: ${LEVELS[this.level - 1].name.toUpperCase()}`, t: 2.2 };
       this.sound?.('level');
     }
     this.hud();
@@ -216,7 +246,14 @@ export class Game {
   }
 
   block(e) {
-    const g = this.g, s = 22, x = Math.round(e.x - s / 2), y = Math.round(e.y - s / 2);
+    const g = this.g, s = 22, y = Math.round(e.y - s / 2);
+    const bw = e.word ? 10 * e.word.length + 8 : s, x = Math.round(e.x - bw / 2);
+    if (e.word) {
+      g.fillStyle = e.color; g.fillRect(x, y, bw, s);
+      g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(x, y, bw, 3);
+      [...e.word].forEach((ch, i) => this.text(ch, x + 9 + i * 10, e.y + 1, 9, PAL.bg, 'center', i < e.idx ? 0.3 : 1));
+      g.fillStyle = PAL.bg; g.fillRect(x + 5 + e.idx * 10, y + s - 4, 8, 2);
+    } else {
     g.fillStyle = e.color; g.fillRect(x, y, s, s);
     g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(x, y, s, 3); g.fillRect(x, y, 3, s);
     g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(x, y + s - 3, s, 3); g.fillRect(x + s - 3, y, 3, s);
@@ -225,6 +262,7 @@ export class Game {
     g.fillStyle = e.color;
     g.fillRect(x + 3 + leg * 2, y + s, 3, 3); g.fillRect(x + s - 6 - leg * 2, y + s, 3, 3);
     this.text(e.letter, e.x + 1, e.y + 1, 12, PAL.bg);
+    }
     // Scaffolding: hint once the letter is past 60% of the way down, fading as its Leitner box rises.
     const alpha = HINT_ALPHA[this.box(e.letter)];
     if (alpha > 0 && e.y > (H - 46) * 0.6) {

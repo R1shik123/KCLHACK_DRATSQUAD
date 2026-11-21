@@ -24,7 +24,7 @@
       <div class="card mastery">
         <div>
           <p class="label">Letters mastered</p>
-          <p class="numeral"><span id="home-mastered">0</span><span class="of">/8</span></p>
+          <p class="numeral"><span id="home-mastered">0</span><span class="of">/26</span></p>
         </div>
         <div class="chips" aria-label="Course">
           <span class="chip">ASL alphabet</span><span class="chip">Beginner</span><span class="chip">8 letters</span>
@@ -109,6 +109,14 @@
               <button class="btn arcade-btn" id="start" type="button">PRESS START</button>
             </div>
           </div>
+          <div class="level-pick" id="level-pick" role="radiogroup" aria-label="Choose level">
+            <button type="button" class="lp on" data-lv="0" aria-pressed="true">Full run</button>
+            <button type="button" class="lp" data-lv="1" aria-pressed="false">1 · Starter</button>
+            <button type="button" class="lp" data-lv="2" aria-pressed="false">2 · Open hands</button>
+            <button type="button" class="lp" data-lv="3" aria-pressed="false">3 · Fists</button>
+            <button type="button" class="lp" data-lv="4" aria-pressed="false">4 · A–Z speed</button>
+            <button type="button" class="lp" data-lv="5" aria-pressed="false">5 · Words</button>
+          </div>
           <p class="hint">Hold the sign to fire · Letters this level: <b id="hud-letters">A B L</b></p>
         </div>
         <aside class="card side">
@@ -168,7 +176,7 @@
       <div class="stats">
         <div class="card stat"><p class="label">Accuracy</p><p class="numeral mid" id="st-acc">–</p></div>
         <div class="card stat"><p class="label">Best score</p><p class="numeral mid" id="st-best">–</p></div>
-        <div class="card stat"><p class="label">Letters mastered</p><p class="numeral mid" id="st-mastered">0<span class="of">/8</span></p></div>
+        <div class="card stat"><p class="label">Letters mastered</p><p class="numeral mid" id="st-mastered">0<span class="of">/26</span></p></div>
         <div class="card stat"><p class="label">Avg reaction</p><p class="numeral mid" id="st-react">–</p></div>
       </div>
       <div class="card">

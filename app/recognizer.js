@@ -9,7 +9,9 @@ const MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/h
 // Not included: E M N S T (fists that differ only in thumb detail), G H P Q (need orientation), K R X (need
 // crossing/hook features), O (too close to C), J Z (need motion). Better 11 solid letters than 26 flaky ones.
 export const LETTERS = ['A', 'B', 'C', 'D', 'I', 'L', 'V', 'Y'];
-export const ALL_LETTERS = ['A', 'B', 'C', 'D', 'F', 'I', 'L', 'U', 'V', 'W', 'Y'];
+export const ALL_LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+// Lab-validated: A B C D F I L U V W Y. The rest are best-effort (beta): orientation, thumb-anchor and crossing checks.
+export const SOLID_LETTERS = ['A', 'B', 'C', 'D', 'F', 'I', 'L', 'U', 'V', 'W', 'Y'];
 
 // [thumb, index, middle, ring, pinky, spread]
 const TEMPLATES = {
@@ -24,6 +26,37 @@ const TEMPLATES = {
   U: [0.3, 1, 1, 0, 0, 0],   // V with the two fingers together
   W: [0.3, 1, 1, 1, 0, 0.5], // index, middle, ring up
   F: [0.3, 0, 1, 1, 1, 0],   // index folded to the thumb, three fingers up
+  // ---- beta letters ----
+  E: [0.1, 0, 0, 0, 0, 0],   // fingers curled onto a tucked thumb
+  S: [0.25, 0, 0, 0, 0, 0],  // fist, thumb across the fingers
+  T: [0.3, 0, 0, 0, 0, 0],   // thumb between index and middle
+  M: [0.2, 0, 0, 0, 0, 0],   // thumb under three fingers
+  N: [0.2, 0, 0, 0, 0, 0],   // thumb under two fingers
+  O: [0.45, 0.4, 0.4, 0.4, 0.4, 0.1], // fingertips meet the thumb
+  G: [0.7, 1, 0, 0, 0, 0],   // index + thumb, pointing sideways
+  H: [0.3, 1, 1, 0, 0, 0],   // U, sideways
+  K: [0.7, 1, 1, 0, 0, 0.5], // V with the thumb between
+  P: [0.7, 1, 1, 0, 0, 0.5], // K pointing down
+  Q: [0.7, 1, 0, 0, 0, 0],   // G pointing down
+  R: [0.3, 1, 1, 0, 0, 0],   // crossed index and middle
+  X: [0.3, 0.45, 0, 0, 0, 0],// hooked index
+  J: [0.3, 0, 0, 0, 1, 0],   // I, tilted (traces a J)
+  Z: [0.3, 1, 0, 0, 0, 0],   // index, sideways (traces a Z)
+};
+// Extra penalties for the beta letters, from orientation (up / sideways / down), where the thumb tip sits,
+// and whether index and middle cross. f.up: 1 = hand upright, 0 = sideways, -1 = pointing down.
+const up = (f) => 0.35 * Math.max(0, 0.45 - f.up);
+const side = (f) => 0.35 * Math.max(0, Math.abs(f.up) - 0.45);
+const down = (f) => 0.35 * Math.max(0, f.up + 0.2);
+const near = (d, r = 0.35) => 0.4 * Math.max(0, d - r);
+const EXTRA = {
+  D: up, I: up, U: (f) => up(f) + (f.crossed ? 0.15 : 0), V: up, K: (f) => up(f) + near(f.thumbTo[10], 0.4),
+  E: (f) => near(f.tipsToThumb, 0.45), S: (f) => near(f.thumbTo[10], 0.3), T: (f) => near(f.thumbTo[6], 0.3),
+  M: (f) => near(f.thumbTo[13], 0.3), N: (f) => near(f.thumbTo[9], 0.3),
+  O: (f) => near(f.thumbTo[8], 0.25), C: (f, base) => base,
+  G: side, H: (f) => side(f) + (f.crossed ? 0.15 : 0), Z: side, J: side,
+  P: (f) => down(f) + near(f.thumbTo[10], 0.45), Q: down,
+  R: (f) => up(f) + (f.crossed ? 0 : 0.25), X: up,
 };
 const WEIGHTS = [0.7, 1, 1, 1, 1, 0.6];
 const ACCEPT = 0.3;          // max weighted distance to accept a letter
@@ -44,6 +77,10 @@ export function features(lm) {
   return {
     v: [clamp((dist(lm[4], lm[5]) / palm - 0.25) / 0.5), i, m, ext(16, 13), ext(20, 17), spread],
     dTouch: dist(lm[4], lm[12]) / palm,
+    up: clamp((lm[0].y - lm[9].y) / palm, -1, 1),
+    thumbTo: Object.fromEntries([6, 8, 9, 10, 13].map((k) => [k, dist(lm[4], lm[k]) / palm])),
+    tipsToThumb: [8, 12, 16, 20].reduce((a, k) => a + dist(lm[4], lm[k]) / palm, 0) / 4,
+    crossed: (lm[8].x - lm[12].x) * (lm[6].x - lm[10].x) < 0,
   };
 }
 
@@ -56,7 +93,8 @@ export function classify(lm) {
     for (let i = 0; i < 6; i++) d += WEIGHTS[i] * (f.v[i] - t[i]) ** 2;
     d = Math.sqrt(d / wsum);
     if (L === 'D') d += Math.max(0, f.dTouch - 0.45) * 0.4; // D needs thumb meeting the middle finger
-    if (L === 'C') d += Math.max(0, 0.35 - f.dTouch) * 0.5; // C keeps a gap between thumb and fingers
+    if (L === 'C') d += Math.max(0, 0.35 - f.dTouch) * 0.5 + Math.max(0, 0.3 - f.thumbTo[8]) * 0.6; // C keeps a gap
+    if (EXTRA[L] && L !== 'C') d += EXTRA[L](f);
     return [L, d];
   }).sort((a, b) => a[1] - b[1]);
   const [best, d1] = scores[0];

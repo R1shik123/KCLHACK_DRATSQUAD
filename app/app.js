@@ -1,12 +1,30 @@
 /* Signfall app shell: routing, storage, camera states, Learn, Play and Progress. */
-import { Recognizer, LETTERS } from './recognizer.js';
-import { Game, LEVEL_LETTERS } from './game.js';
+import { Recognizer, ALL_LETTERS as LETTERS } from './recognizer.js';
+import { Game, LEVEL_LETTERS, LEVELS } from './game.js';
 import { Music } from './music.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const HANDSHAPES = {
+  F: 'Touch your index fingertip to your thumb tip in a circle. Hold the other three fingers up and apart.',
+  U: 'Hold your index and middle fingers straight up and together. Fold the other fingers under your thumb.',
+  W: 'Hold your index, middle and ring fingers up and spread. Touch your thumb to your little finger.',
+  E: 'Curl all four fingertips down to rest on your thumb, tucked across your palm.',
+  G: 'Point your index finger sideways with your thumb parallel above it, like a small pinch.',
+  H: 'Point your index and middle fingers sideways, together, thumb tucked.',
+  J: 'Make an I (little finger up) and draw a J in the air with it.',
+  K: 'Index and middle fingers up in a V, with your thumb touching the middle finger between them.',
+  M: 'Fold your thumb under your index, middle and ring fingers.',
+  N: 'Fold your thumb under your index and middle fingers.',
+  O: 'Curve all your fingertips to touch your thumb tip, making an O.',
+  P: 'Make a K, then point it down.',
+  Q: 'Make a G, then point it down.',
+  R: 'Cross your middle finger over your index finger.',
+  S: 'Make a fist with your thumb wrapped across the front of your fingers.',
+  T: 'Make a fist with your thumb tucked between your index and middle fingers.',
+  X: 'Raise your index finger and bend it into a hook.',
+  Z: 'Point your index finger and draw a Z in the air.',
   A: 'Make a fist. Rest your thumb against the side of your index finger, pointing up.',
   B: 'Hold your four fingers straight up and together. Fold your thumb across your palm.',
   C: 'Curve your fingers and thumb into a C, as if holding a cup. Leave a gap between thumb and fingers.',
@@ -145,6 +163,12 @@ const game = new Game($('game'), {
   },
   onEnd: (r) => {
     Music.stop();
+    setLevelPickEnabled(true);
+    // Log the round to Snowflake (server-side, key-pair auth); the app works the same offline.
+    fetch('/api/rounds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+      score: r.score, level: r.level, practice: pickLevel || null, accuracy: r.accuracy, avg_ms: r.avgReaction, early: !!r.early,
+      letters: Object.fromEntries(Object.entries(r.stats).map(([L, s]) => [L, { hits: s.hits, misses: s.misses, times: s.times.map(Math.round) }])),
+    }) }).catch(() => {});
     for (const [L, s] of Object.entries(r.stats)) {
       const t = (store.letters[L] ||= { hits: 0, misses: 0 });
       t.hits += s.hits; t.misses += s.misses;
@@ -190,13 +214,23 @@ function showGameOver(r) {
   location.hash = '#results';
 }
 function setPlayButtons(on) { $('pause').disabled = !on; $('end').disabled = !on; }
+let pickLevel = 0;  // 0 = full run from level 1; 1..5 = practise that level only
+$('level-pick').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-lv]');
+  if (!b || game.state === 'play' || game.state === 'paused') return;
+  pickLevel = +b.dataset.lv;
+  for (const x of $('level-pick').children) { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); }
+  $('hud-letters').textContent = (pickLevel ? (LEVELS[pickLevel - 1].words || LEVELS[pickLevel - 1].letters) : LEVEL_LETTERS[0]).join(' ');
+});
+function setLevelPickEnabled(on) { for (const x of $('level-pick').children) x.disabled = !on; }
 function startGame() {
+  setLevelPickEnabled(false);
   $('overlay').hidden = true;
   blip('start');
   if (rec.state === 'off') rec.start();
-  game.start();
+  game.start(pickLevel || 1, pickLevel > 0);
   Music.setMuted(!!store.muted);
-  Music.start(1);
+  Music.start(pickLevel || 1);
   setPlayButtons(true);
   $('pause').focus();
 }
@@ -221,7 +255,7 @@ $('overlay').addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
   const act = b.id === 'start' ? 'start' : b.dataset.act;
-  if (act === 'start' || act === 'restart') { if (act === 'restart') { game.stop(); Music.stop(); } startGame(); }
+  if (act === 'start' || act === 'restart') { if (act === 'restart') { game.stop(); Music.stop(); setLevelPickEnabled(true); } startGame(); }
   if (act === 'resume') resumeGame();
   if (act === 'end') endEarly();
 });
