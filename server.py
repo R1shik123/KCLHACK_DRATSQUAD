@@ -72,6 +72,15 @@ for name in ("game", "roads"):
         print(f"{name} module not loaded:", e)
 
 
+@app.middleware("http")
+async def always_revalidate(request, call_next):
+    """Make browsers re-check site files on every load, so phones never run stale JS/CSS mid-demo."""
+    response = await call_next(request)
+    if not request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.exception_handler(Exception)
 async def errors(request, exc):
     return JSONResponse({"error": str(exc)}, status_code=500)

@@ -44,7 +44,8 @@
     const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * t) * Math.cos(b.lat * t) * Math.sin(dLon / 2) ** 2;
     return 2 * R * Math.asin(Math.sqrt(h));
   }
-  const walkMins = (m) => Math.max(1, Math.round(m / 80));
+  // Straight-line distance x1.3 approximates real street routes; 80 m/min is a typical walking pace.
+  const walkMins = (m) => Math.max(1, Math.round((m * 1.3) / 80));
   const fixed = (p) => `lat=${p.lat.toFixed(5)}&lon=${p.lon.toFixed(5)}`;
 
   // ---------- fixed lists ----------
@@ -109,10 +110,13 @@
   async function allCams() {
     const d = await getJSON(`${TFL}/Place/Type/JamCam`, 600_000);
     return d.map(c => {
-      const prop = Object.fromEntries((c.additionalProperties || []).map(a => [a.key, a.value]));
+      const props = c.additionalProperties || [];
+      const prop = Object.fromEntries(props.map(a => [a.key, a.value]));
+      const when = Object.fromEntries(props.map(a => [a.key, a.modified]));
       return {
         id: c.id.replace(/^JamCams_/, ''), name: c.commonName, view: prop.view || '',
         lat: c.lat, lon: c.lon, available: prop.available !== 'false', image: prop.imageUrl, video: prop.videoUrl,
+        modified: when.videoUrl || when.imageUrl || null, // when TfL last updated this camera's clip
       };
     }).filter(c => c.available && c.image);
   }

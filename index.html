@@ -5,14 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Londonfax</title>
   <meta name="description" content="Teletext, rebuilt for 2026: live Tube status, departures, weather and TfL traffic cameras in 40 columns and 8 colours.">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <main class="room">
     <header class="brand">
       <span class="logo">LONDONFAX</span>
-      <span class="tag">Teletext, rebuilt for 2026 · live London in 40 columns</span>
+      <span class="tag">Teletext, rebuilt for 2026 · London's transport, live, in 40 columns</span>
     </header>
+
+    <nav class="flagship" aria-label="Flagship modes">
+      <a class="fm game" href="/play/"><b>GAME MODE</b><span>1v1 on your phones · page 600</span></a>
+      <a class="fm control" href="/control/"><b>CONTROL ROOM</b><span>Close a road, see the impact · page 800</span></a>
+    </nav>
 
     <form id="finder" class="finder" role="search" autocomplete="off">
       <div class="field">
@@ -75,13 +80,13 @@
     </footer>
   </main>
 
-  <script src="js/teletext.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/pages.js"></script>
+  <script src="js/teletext.js?v=3"></script>
+  <script src="js/data.js?v=3"></script>
+  <script src="js/pages.js?v=3"></script>
   <!-- Feature modules register pages on window.LFExtra[pageNumber] -->
   <script>window.LFExtra = window.LFExtra || {};</script>
-  <script src="js/pages-control.js"></script>
-  <script src="js/pages-game.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/pages-control.js?v=3"></script>
+  <script src="js/pages-game.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
 </body>
 </html>

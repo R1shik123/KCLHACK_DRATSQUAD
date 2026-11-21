@@ -51,21 +51,37 @@
     .replace(/ \(.*?\)/g, '').replace(/-Underground/i, '').toUpperCase();
   function block(s, r, c, colour) { const x = s.cell(r, c); if (x) Object.assign(x, { ch: ' ', mos: 63, fg: colour, bg: 'K' }); }
   const mins = (sec) => { const m = Math.floor(sec / 60); return m < 1 ? ['DUE', { fg: 'G', flash: true }] : [`${m} MIN`, { fg: 'Y' }]; };
+  /* Countdowns keep ticking between refreshes: TfL's timeToStation minus the seconds since we fetched it. */
+  function liveMinutes(s, metas, fetchedAt = Date.now()) {
+    const draw = (sc) => {
+      const gone = (Date.now() - fetchedAt) / 1000;
+      for (const { r, tts } of metas) {
+        for (let c = 33; c < COLS; c++) Object.assign(sc.cells[r][c], { ch: ' ', mos: 0, flash: false });
+        const [txt, sty] = mins(Math.max(0, tts - gone)); sc.right(r, txt, sty);
+      }
+    };
+    draw(s);
+    const prev = s.tick;
+    s.tick = (sc) => { if (prev) prev(sc); draw(sc); };
+  }
 
   // ---------- P100 index ----------
   async function p100() {
     const s = new Screen();
     s.band(1, 'B', 4);
     s.banner(1, 1, 38, 4, 'LONDONFAX', { fg: 'Y', bg: 'B', size: 1.05 });
-    s.center(5, 'LIVE LONDON IN FORTY COLUMNS', { fg: 'C' });
+    s.center(5, "LONDON'S TRANSPORT, LIVE, IN 40 COLUMNS", { fg: 'C' });
+    // The two flagship modes, first and loudest
+    s.band(6, 'M'); s.text(6, 1, '> GAME MODE: BEAT A MATE ON YOUR PHONE', { fg: 'W', bg: 'M' }); s.right(6, '600', { fg: 'Y', bg: 'M' }); s.link(6, 600);
+    s.band(7, 'R'); s.text(7, 1, '> CONTROL ROOM: CLOSE A ROAD, SEE IMPACT', { fg: 'W', bg: 'R' }); s.right(7, '800', { fg: 'Y', bg: 'R' }); s.link(7, 800);
     const items = [
       ['LONDON NOW', '101', 101], ['NEAR ME', '110', 110], ['BUS STOP LIVE', '150', 150],
       ['TUBE STATUS', '300', 300], ['ELIZABETH, OVERGROUND', '310', 310], ['STATION DEPARTURES', '320-325', 320],
       ['WEATHER', '400', 400], ['CYCLE HIRE DOCKS', '450', 450], ['TRAFFIC CAMERAS (LIVE)', '500-599', 500],
-      ['FIRST YEAR HACK', '199', 199], ['ABOUT LONDONFAX', '700', 700],
+      ['DATA CHECK + SOURCES', '199', 199], ['ABOUT LONDONFAX', '700', 700],
     ];
     items.forEach(([label, num, page], i) => {
-      const r = 7 + i;
+      const r = 9 + i;
       s.text(r, 3, label, { fg: page === 199 ? 'G' : 'W' });
       s.text(r, 3 + label.length + 1, '.'.repeat(Math.max(0, 27 - label.length)), { fg: 'B' });
       s.text(r, 31, num, { fg: 'Y' });
@@ -74,13 +90,12 @@
     try {
       const lines = await D.tubeStatus();
       const bad = lines.filter(l => worst(l).statusSeverity !== 10);
-      s.band(19, bad.length ? 'R' : 'G');
-      s.center(19, bad.length ? `${bad.length} TUBE LINES DISRUPTED - SEE 300` : 'GOOD SERVICE ON ALL TUBE LINES',
+      s.band(21, bad.length ? 'R' : 'G');
+      s.center(21, bad.length ? `${bad.length} TUBE LINES DISRUPTED - SEE 300` : 'GOOD SERVICE ON ALL TUBE LINES',
         { fg: bad.length ? 'W' : 'K', bg: bad.length ? 'R' : 'G' });
-      s.link(19, 300);
+      s.link(21, 300);
     } catch { /* index still works offline */ }
-    s.text(21, 1, 'TYPE A PAGE NUMBER, OR CLICK ANY LINE', { fg: 'G' });
-    s.text(22, 1, 'SEARCH STATIONS, BUS STOP CODES + ROADS', { fg: 'G' });
+    s.text(22, 1, 'TYPE A PAGE NUMBER, OR CLICK ANY LINE', { fg: 'G' });
     footerNote(s, 'TFL OPEN DATA + OPEN-METEO', 'M');
     return { subs: [s], fastext: FAST_MAIN, refresh: 60_000 };
   }
@@ -111,24 +126,18 @@
 
     s.text(14, 1, 'NEXT FROM TEMPLE (KCL STRAND)', { fg: 'C' });
     if (arr.status === 'fulfilled') {
+      const metas = [];
       arr.value.slice().sort((a, b) => a.timeToStation - b.timeToStation).slice(0, 4).forEach((t, i) => {
         block(s, 15 + i, 1, lineBlockColour(t.lineId));
         s.text(15 + i, 3, cleanStation(t.towards || t.destinationName).slice(0, 26), { fg: 'W' });
-        const [txt, st] = mins(t.timeToStation); s.right(15 + i, txt, st);
+        metas.push({ r: 15 + i, tts: t.timeToStation });
       });
+      liveMinutes(s, metas);
       for (let r = 14; r <= 18; r++) s.link(r, 320);
     } else s.text(15, 1, 'DEPARTURES UNAVAILABLE', { fg: 'R' });
 
-    s.band(20, 'M', 2); s.link(20, 199);
-    s.tick = (sc) => {
-      const t = london(), now = t.h * 3600 + t.m * 60 + t.s;
-      const start = 11 * 3600, end = 18 * 3600;
-      const msg = now < start ? `HACKING STARTS IN ${dur(start - now)}`
-        : now < end ? `HACKING ENDS IN ${dur(end - now)}` : 'HACKING HAS ENDED - JUDGING';
-      for (let c = 0; c < COLS; c++) Object.assign(sc.cells[20][c], { ch: ' ', mos: 0, dh: false, bg: 'M' });
-      sc.text(20, 2, msg, { fg: 'W', bg: 'M', dh: true });
-    };
-    s.tick(s);
+    s.band(20, 'M'); s.text(20, 1, '> GAME MODE', { fg: 'W', bg: 'M' }); s.right(20, '600', { fg: 'Y', bg: 'M' }); s.link(20, 600);
+    s.band(21, 'R'); s.text(21, 1, '> CONTROL ROOM', { fg: 'W', bg: 'R' }); s.right(21, '800', { fg: 'Y', bg: 'R' }); s.link(21, 800);
     return { subs: [s], fastext: FAST_MAIN, refresh: 30_000 };
   }
 
@@ -196,12 +205,14 @@
     if (list[0]?.towards) s.text(4, 1, `TOWARDS ${list[0].towards.toUpperCase()}`.slice(0, 38), { fg: 'W' });
     s.text(6, 1, 'ROUTE', { fg: 'C' }); s.text(6, 8, 'DESTINATION', { fg: 'C' }); s.right(6, 'DUE', { fg: 'C' });
     if (!list.length) s.text(8, 1, 'NO BUSES DUE IN THE NEXT 30 MINUTES', { fg: 'Y' });
+    const metas = [];
     list.slice(0, 14).forEach((b, i) => {
       const r = 7 + i;
       s.text(r, 1, b.lineName.toUpperCase().slice(0, 5), { fg: 'Y' });
       s.text(r, 8, (b.destinationName || '').toUpperCase().slice(0, 24), { fg: 'W' });
-      const [txt, st] = mins(b.timeToStation); s.right(r, txt, st);
+      metas.push({ r, tts: b.timeToStation });
     });
+    liveMinutes(s, metas);
     footerNote(s, `UPDATED ${hhmmss(new Date())}`, 'G');
     return { subs: [s], fastext, refresh: 20_000 };
   }
@@ -285,6 +296,7 @@
       const s = title(new Screen(), st.name.slice(0, 26), { bg: 'B', fg: 'W', tag: 'LIVE', tagFg: 'Y' });
       if (st.note) s.text(3, 1, st.note, { fg: 'C' });
       let r = 4;
+      const metas = [];
       if (!chunk.length) {
         s.text(6, 1, 'NO TRAINS EXPECTED RIGHT NOW', { fg: 'Y' });
         s.text(8, 1, 'NATIONAL RAIL-ONLY STATIONS ARE NOT', { fg: 'W' });
@@ -297,9 +309,10 @@
         s.text(r, 3, shortLine(t.lineName), { fg: 'W' });
         const dest = cleanStation(t.towards || t.destinationName).replace('CHECK FRONT OF TRAIN', 'SEE FRONT OF TRAIN');
         s.text(r, 14, dest.slice(0, 18), { fg: 'W' });
-        const [txt, sty] = mins(t.timeToStation); s.right(r, txt, sty);
+        metas.push({ r, tts: t.timeToStation });
         r++;
       }
+      liveMinutes(s, metas, fetched.getTime());
       footerNote(s, `UPDATED ${hhmmss(fetched)}`, 'G');
       return s;
     });
@@ -373,7 +386,7 @@
     temps.forEach((t, i) => { const h = Math.max(1, Math.round((t - lo) / (hi - lo) * 12)); x.fillStyle = rain[i] >= 50 ? '#0ff' : '#ff0'; x.fillRect(i * 6, 12 - h, 4, h); });
     s.image(17, 2, 36, 4, cv, { palette: ['K', 'Y', 'C'] });
     hrs.forEach((t, i) => { s.text(21, 2 + i * 3, t.slice(11, 13), { fg: 'W' }); s.text(22, 2 + i * 3, String(Math.round(temps[i])), { fg: 'Y' }); });
-    footerNote(s, 'CYAN BARS = RAIN LIKELY', 'C');
+    footerNote(s, 'MODEL EST. FOR STRAND; CYAN=RAIN', 'C');
 
     const f = title(new Screen(), '5 DAY FORECAST', { bg: 'C', fg: 'B' });
     f.text(4, 1, 'DAY  WEATHER', { fg: 'C' }); f.text(4, 23, 'HIGH LOW RAIN', { fg: 'C' });
@@ -458,44 +471,67 @@
     }
     s.media = { video: cam.video, image: still ? still.url : cam.image, r: 2, c: 0, w: 40, h: 20 };
     s.text(22, 1, 'LIVE', { fg: 'R', flash: true });
-    s.text(22, 6, still && still.modified ? `UPDATED ${ago(still.modified)}` : 'TFL JAMCAM', { fg: 'W' });
+    const clipTime = cam.modified ? new Date(cam.modified) : still && still.modified;
+    s.text(22, 6, clipTime ? `CLIP FROM ${ago(clipTime)}` : 'TFL JAMCAM', { fg: 'W' });
     if (cam.distance >= 20) s.right(22, `${dist(cam.distance)} AWAY`, { fg: 'C' });
     else s.right(22, 'SEARCHED', { fg: 'C' });
     if (cam.view) s.text(23, 1, cam.view.toUpperCase().slice(0, 29), { fg: 'C' });
     return { subs: [s], fastext, refresh: 120_000 };
   }
 
-  // ---------- P199 First Year Hack ----------
-  const SCHEDULE = [
-    ['09:00', 'DOORS OPEN + CHECK-IN'], ['10:15', 'OPENING CEREMONY'], ['11:00', 'HACKING STARTS'],
-    ['11:00', 'TEAM BUILDING (AUDITORIUM)'], ['11:30', 'GIT + GITHUB WORKSHOP'], ['13:00', 'LUNCH (6TH FLOOR)'],
-    ['15:30', 'MINI ACTIVITY'], ['17:30', 'SOFT DEADLINE'], ['18:00', 'HARD DEADLINE'], ['18:10', 'JUDGING'],
-    ['19:30', 'CLOSING CEREMONY + PRIZES'],
-  ];
+  // ---------- P199 data check: is every feed live, and what has Snowflake logged? ----------
+  async function timed(fn) { const t0 = performance.now(); try { const v = await fn(); return { ok: true, v, ms: Math.round(performance.now() - t0) }; } catch (e) { return { ok: false, err: String(e.message || e), ms: Math.round(performance.now() - t0) }; } }
+  const age = (d) => { if (!d || isNaN(d)) return '-'; const s = Math.max(0, Math.round((Date.now() - d) / 1000)); return s < 90 ? `${s}S AGO` : `${Math.round(s / 60)}M AGO`; };
   async function p199() {
-    const s = title(new Screen(), 'FIRST YEAR HACK', { bg: 'M', fg: 'W', tag: 'KCL TECH', tagFg: 'Y' });
-    s.text(3, 1, 'TODAY: BUILD SOMETHING IN 7 HOURS', { fg: 'C' });
-    s.tick = (sc) => {
-      const t = london(), now = t.h * 60 + t.m;
-      let cur = -1;
-      SCHEDULE.forEach(([hm], i) => { const [h, m] = hm.split(':').map(Number); if (h * 60 + m <= now) cur = i; });
-      SCHEDULE.forEach(([hm, what], i) => {
-        const r = 5 + i;
-        sc.text(r, 1, hm, { fg: 'Y' });
-        sc.text(r, 7, what.padEnd(27), { fg: i === cur ? 'G' : 'W' });
-        sc.text(r, 35, i === cur ? 'NOW ' : '    ', { fg: 'G', flash: true });
-      });
-      const sec = t.h * 3600 + t.m * 60 + t.s;
-      const urgent = sec >= 61200 && sec < 64800;
-      const msg = sec < 39600 ? `STARTS IN ${dur(39600 - sec)}` : sec < 64800 ? `DEADLINE ${dur(64800 - sec)}` : 'PENS DOWN! JUDGING';
-      sc.band(18, urgent ? 'R' : 'B', 2);
-      for (let c = 0; c < COLS; c++) Object.assign(sc.cells[18][c], { ch: ' ', mos: 0, dh: false });
-      sc.center(18, msg, { fg: 'Y', bg: urgent ? 'R' : 'B', dh: true });
-    };
-    s.tick(s);
-    s.text(21, 1, 'TRACKS: CREATIVE TECH + RETRO REMIX', { fg: 'W' });
-    footerNote(s, 'SUBMIT AT MLH.LINK/FIRST-YEAR-HACK', 'G');
-    return { subs: [s], fastext: FAST_MAIN };
+    const [status, arr, wx, bikes, cams, snow, hist] = await Promise.all([
+      timed(() => D.tubeStatus()), timed(() => D.stationArrivals(D.STATIONS[0].id)), timed(() => D.weather()),
+      timed(() => D.bikes()), timed(() => D.allCams()),
+      timed(() => fetch('/api/snowflake', { cache: 'no-store' }).then(r => r.json())),
+      timed(() => fetch('/api/disruptions/today', { cache: 'no-store' }).then(r => r.json())),
+    ]);
+    const s = title(new Screen(), 'DATA CHECK', { bg: 'G', fg: 'K', tag: `AT ${hhmm()}`, tagFg: 'K' });
+    s.text(3, 1, 'FEED', { fg: 'C' }); s.text(3, 19, 'RECORDS', { fg: 'C' }); s.text(3, 28, 'DATA AGE', { fg: 'C' });
+    const newest = (xs) => xs.length ? new Date(Math.max(...xs.map(x => +new Date(x)))) : null;
+    const rows = [
+      ['TFL LINE STATUS', status, (v) => `${v.length} LINES`, () => null],
+      ['TFL ARRIVALS', arr, (v) => `${v.length} TRAINS`, (v) => newest(v.map(t => t.timestamp))],
+      ['OPEN-METEO', wx, () => 'FORECAST', (v) => new Date(v.current.time + ':00Z')],
+      ['TFL CYCLE HIRE', bikes, (v) => `${v.length} DOCKS`, () => null],
+      ['TFL JAMCAMS', cams, (v) => `${v.length} CAMS`, (v) => newest(v.map(c => c.modified).filter(Boolean))],
+    ];
+    rows.forEach(([name, r, count, when], i) => {
+      const row = 5 + i;
+      s.text(row, 1, name, { fg: 'W' });
+      if (r.ok) { s.text(row, 19, count(r.v).slice(0, 9), { fg: 'G' }); const d = when(r.v); s.text(row, 28, d ? age(d) : `LIVE ${r.ms}MS`, { fg: 'Y' }); }
+      else s.text(row, 19, 'FAILED - RETRYING', { fg: 'R', flash: true });
+    });
+    s.text(11, 1, 'SNOWFLAKE AUDIT LOG', { fg: 'C' });
+    if (snow.ok && snow.v.configured) {
+      const c = snow.v.counts || {}, last = snow.v.lastLog && snow.v.lastLog.at;
+      s.text(12, 1, `${c.status_rows ?? '?'} TFL STATUS ROWS LOGGED`, { fg: 'W' });
+      s.text(13, 1, last ? `LAST LOGGED ${last.slice(11, 16)} UTC (EVERY 2 MIN)` : 'FIRST LOG WITHIN 2 MIN', { fg: 'Y' });
+      s.text(14, 1, `${c.game_rows ?? 0} GAME RESULTS STORED`, { fg: 'W' });
+    } else s.text(12, 1, 'SNOWFLAKE NOT CONNECTED ON THIS SERVER', { fg: 'Y' });
+    s.text(16, 1, 'HOW WE KEEP IT ACCURATE', { fg: 'C' });
+    ['WE SHOW TFL + OPEN-METEO DATA UNCHANGED,', 'WITH ITS TIME. SIMULATIONS ARE LABELLED', 'EST. EVERY TFL REPORT IS ARCHIVED IN', 'SNOWFLAKE AS AN AUDIT TRAIL (NEXT PAGE).']
+      .forEach((t, i) => s.text(17 + i, 1, t, { fg: 'W' }));
+    footerNote(s, 'WALKS = STRAIGHT LINE X1.3, 80M/MIN', 'M');
+
+    const h = title(new Screen(), 'TODAY ON THE NETWORK', { bg: 'G', fg: 'K', tag: 'SNOWFLAKE', tagFg: 'K' });
+    h.text(3, 1, 'LINES NOT AT GOOD SERVICE, LAST 24H', { fg: 'C' });
+    h.text(4, 1, 'LINE', { fg: 'C' }); h.text(4, 17, 'STATUS', { fg: 'C' }); h.right(4, 'SEEN', { fg: 'C' });
+    const lines = hist.ok ? (hist.v.lines || []) : [];
+    if (!hist.ok || hist.v.source !== 'snowflake') h.text(6, 1, 'SNOWFLAKE HISTORY NOT AVAILABLE HERE', { fg: 'Y' });
+    else if (!lines.length) h.text(6, 1, 'NO DISRUPTIONS LOGGED YET', { fg: 'G' });
+    lines.slice(0, 14).forEach((l, i) => {
+      const r = 6 + i;
+      block(h, r, 1, lineBlockColour(l.line_id));
+      h.text(r, 3, shortLine(l.line_name), { fg: 'W' });
+      h.text(r, 17, String(l.status || '').toUpperCase().slice(0, 15), statusStyle(l.worst_severity));
+      h.right(r, `${(l.first_seen || '').slice(11, 16)}`, { fg: 'Y' });
+    });
+    footerNote(h, 'QUERIED LIVE FROM SNOWFLAKE (SQL)', 'M');
+    return { subs: [s, h], fastext: FAST_MAIN, refresh: 60_000 };
   }
 
   // ---------- P700 about ----------
@@ -504,10 +540,11 @@
     const lines = [
       ['C', 'TELETEXT (1974-2012) PUT NEWS ON EVERY'], ['C', 'TV AS 40 X 25 COLOURED CHARACTERS.'], ['W', ''],
       ['W', 'LONDONFAX REBUILDS IT AS A REAL TOOL:'],
+      ['M', ' 600 GAME MODE: 1V1 ON YOUR PHONES'], ['R', ' 800 CONTROL ROOM: CLOSE A ROAD'],
       ['Y', ' 110 EVERYTHING NEAR YOU, BY GPS'], ['Y', ' 150 LIVE BUSES BY STOP CODE'],
-      ['Y', ' 330 ANY STATION, LIVE DEPARTURES'], ['Y', ' 450 CYCLE HIRE BIKES + SPACES'],
-      ['Y', ' 501 LIVE VIDEO FROM 900 TFL CAMERAS'], ['W', ''],
-      ['G', 'PRESS REVEAL ON A CAMERA TO REDRAW IT'], ['G', 'AS 1980S TELETEXT BLOCK GRAPHICS.'], ['W', ''],
+      ['Y', ' 330 ANY STATION, LIVE DEPARTURES'], ['Y', ' 501 LIVE VIDEO, 900 TFL CAMERAS'],
+      ['G', ' 199 DATA CHECK + SNOWFLAKE LOG'], ['W', ''],
+      ['G', 'REVEAL ON A CAMERA = TELETEXT VERSION'], ['W', ''],
       ['M', 'POWERED BY TFL OPEN DATA. CONTAINS OS'], ['M', 'DATA (C) CROWN COPYRIGHT. WEATHER BY'], ['M', 'OPEN-METEO.COM (CC BY 4.0).'],
     ];
     lines.forEach(([fg, t], i) => s.text(4 + i, 1, t, { fg }));
