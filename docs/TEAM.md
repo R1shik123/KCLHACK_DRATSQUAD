@@ -96,6 +96,12 @@ window.LFExtra[600] = async (data) => {
 | `/api/roads/*` (see Agent 2 plan) | Agent 2 | Control Room: close roads, stop lines, impact |
 | `/api/game/*` (see Agent 3 plan) | Agent 3 | Rooms, rounds, edits, scoring |
 
+## What the server publishes (security)
+`server.py` serves ONLY: `/`, `/index.html`, `/style.css`, `/js/`, `/play/`, `/control/`, and `/api/*`.
+Everything else (`.env`, `.secrets/`, `.git/`, Python source, docs) returns 404. If you need another
+public folder, ask Agent 1 to add it to `PUBLIC_DIRS`. Never put secrets inside `js/`, `play/` or `control/`.
+The server listens on 127.0.0.1 only; phones reach the hosting Mac through the tunnel.
+
 ## TfL rate limit — read this
 The venue's Wi-Fi gives every team one public IP, and TfL's no-key limit is per IP; we already hit
 `429 Rate limit is exceeded`. So:

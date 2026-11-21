@@ -86,14 +86,31 @@ async def errors(request, exc):
     return JSONResponse({"error": str(exc)}, status_code=500)
 
 
-# Static site last, so /api/* wins. html=True serves index.html for folders (e.g. /play/).
-app.mount("/", StaticFiles(directory=ROOT, html=True), name="site")
+# Static site LAST so /api/* wins. Only an allowlist of public files and folders is served:
+# never the project root itself, which holds .env, .secrets/ (Snowflake key), .git/ and source.
+from fastapi.responses import FileResponse  # noqa: E402
+
+PUBLIC_FILES = {"": "index.html", "index.html": "index.html", "style.css": "style.css"}
+PUBLIC_DIRS = ("js", "play", "control")  # add new public folders here (Agent 1 owns this list)
+
+
+def _public_file(name):
+    async def serve():
+        return FileResponse(os.path.join(ROOT, PUBLIC_FILES[name]))
+    return serve
+
+
+for _name in PUBLIC_FILES:
+    app.add_api_route("/" + _name, _public_file(_name), methods=["GET", "HEAD"], include_in_schema=False)
+for _d in PUBLIC_DIRS:
+    app.mount(f"/{_d}", StaticFiles(directory=os.path.join(ROOT, _d), html=True, check_dir=False), name=_d)
 
 if __name__ == "__main__":
     import uvicorn
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8765)))
-    ap.add_argument("--host", default="0.0.0.0")
+    # Local only by default; phones reach it through the tunnel, never directly over the Wi-Fi.
+    ap.add_argument("--host", default="127.0.0.1")
     a = ap.parse_args()
     uvicorn.run(app, host=a.host, port=a.port, log_level="warning")
