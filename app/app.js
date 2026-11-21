@@ -18,9 +18,10 @@ const HANDSHAPES = {
 
 // ---------- storage (localStorage, always wrapped) ----------
 const KEY = 'signfall.v1';
-const blank = () => ({ boxes: {}, letters: {}, days: {}, best: 0, reactions: [], games: 0, muted: false });
+const blank = () => ({ boxes: {}, letters: {}, days: {}, best: 0, reactions: [], games: 0, muted: false, history: [] });
 let store = blank();
 try { store = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { store = blank(); }
+if (!Array.isArray(store.history)) store.history = [];
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch { /* private mode etc. */ } };
 const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const markToday = () => { const k = dayKey(); store.days[k] = (store.days[k] || 0) + 1; save(); };
@@ -89,7 +90,7 @@ let checkTarget = null;
 function renderLearn() {
   $('letters').innerHTML = LETTERS.map((L) => {
     const box = store.boxes[L];
-    return `<article class="card letter-card">
+    return `<article class="card letter-card${learnFocus.includes(L) ? ' focus' : ''}">
       <span class="glyph" aria-hidden="true">${L}</span>
       <h2>Letter ${L}${box ? ` <span class="box">· box ${box} of 5</span>` : ''}</h2>
       <p>${HANDSHAPES[L]}</p>
@@ -154,32 +155,82 @@ const game = new Game($('game'), {
 });
 document.fonts?.load('16px "Press Start 2P"').then(() => { if (game.state === 'idle') game.drawIdle(); }).catch(() => {});
 
+const fmtS = (ms) => (ms == null ? '–' : `${(ms / 1000).toFixed(1)}s`);
+const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+let lastNext = [];
 function showGameOver(r) {
-  const acc = r.accuracy == null ? '–' : `${Math.round(r.accuracy * 100)}%`;
-  const react = r.avgReaction == null ? '–' : `${(r.avgReaction / 1000).toFixed(1)}s`;
-  $('overlay').innerHTML = `
-    <p class="px big">GAME OVER</p>
-    <p class="px gold">SCORE ${r.score}${r.score >= store.best && r.score > 0 ? ' · NEW BEST' : ''}</p>
-    <div class="over-stats">
-      <div>ACCURACY<b>${acc}</b></div><div>AVG REACTION<b>${react}</b></div>
-      <div>MASTERED<b>${mastered()}/8</b></div><div>BEST COMBO<b>${r.bestCombo}</b></div>
-    </div>
-    <p class="px">${r.toPractise.length ? `PRACTISE: ${r.toPractise.join(' ')}` : 'NO MISSED LETTERS'}</p>
-    <button class="btn arcade-btn" id="start" type="button">PLAY AGAIN</button>`;
+  const rows = Object.entries(r.stats).map(([L, s]) => ({ L, hits: s.hits, misses: s.misses, avg: avg(s.times || []), slow: (s.times || []).length ? Math.max(...s.times) : null }))
+    .sort((a, b) => a.L.localeCompare(b.L));
+  const attempts = r.hits + r.escapes;
+  store.history.push({ at: Date.now(), score: r.score, accuracy: r.accuracy, attempted: rows.length, early: !!r.early,
+    letters: Object.fromEntries(rows.map((x) => [x.L, { hits: x.hits, misses: x.misses, avg: x.avg }])) });
+  store.history = store.history.slice(-50);
+  save();
+  $('res-kicker').textContent = r.early ? 'Round ended early' : 'Game over';
+  $('res-score').textContent = r.score.toLocaleString('en-GB');
+  $('res-acc').textContent = attempts ? `${Math.round(100 * r.hits / attempts)}%` : '–';
+  $('res-attempted').textContent = rows.length;
+  const slow = rows.filter((x) => x.avg != null).sort((a, b) => b.avg - a.avg).slice(0, 5);
+  const max = Math.max(1, ...slow.map((x) => x.avg));
+  $('res-slow').innerHTML = slow.length ? slow.map((x) => `<div class="bar"><span>${x.L}</span><span class="track" role="img" aria-label="${x.L}: ${fmtS(x.avg)} average"><i style="width:${Math.round(100 * x.avg / max)}%"></i></span><small>${fmtS(x.avg)}</small></div>`).join('')
+    : '<p class="muted small">No letters signed this round.</p>';
+  $('res-table').innerHTML = rows.length ? `<tr><th>Letter</th><th>Signed</th><th>Missed</th><th>Avg time</th><th>Slowest</th></tr>` +
+    rows.map((x) => `<tr><td>${x.L}</td><td>${x.hits}</td><td>${x.misses}</td><td>${fmtS(x.avg)}</td><td>${fmtS(x.slow)}</td></tr>`).join('')
+    : '<tr><td class="muted">No letters reached this round.</td></tr>';
+  // Practise next: most misses first, then slowest average.
+  lastNext = rows.slice().sort((a, b) => b.misses - a.misses || (b.avg ?? 0) - (a.avg ?? 0)).filter((x) => x.misses || x.avg != null).slice(0, 3).map((x) => x.L);
+  $('res-next').innerHTML = lastNext.length ? lastNext.map((L) => `<span class="chip">${L}</span>`).join('') : '<p class="muted small">Play a longer round to get suggestions.</p>';
+  $('res-learn').hidden = !lastNext.length;
+  setPlayButtons(false);
+  $('overlay').innerHTML = `<p class="px big">SIGNFALL</p><p class="px">Hold the sign to fire</p><button class="btn arcade-btn" id="start" type="button">PRESS START</button>`;
   $('overlay').hidden = false;
-  $('start').focus();
+  location.hash = '#results';
 }
-$('overlay').addEventListener('click', (e) => {
-  if (!e.target.closest('#start')) return;
+function setPlayButtons(on) { $('pause').disabled = !on; $('end').disabled = !on; }
+function startGame() {
   $('overlay').hidden = true;
   blip('start');
   if (rec.state === 'off') rec.start();
   game.start();
+  setPlayButtons(true);
+  $('pause').focus();
+}
+function pauseGame() {
+  if (!game.pause()) return;
+  $('overlay').innerHTML = `<p class="px big">PAUSED</p><div class="btn-row">
+    <button class="btn arcade-btn" type="button" data-act="resume">RESUME</button>
+    <button class="btn ghost-dark" type="button" data-act="restart">RESTART</button>
+    <button class="btn ghost-dark" type="button" data-act="end">END GAME</button></div>`;
+  $('overlay').hidden = false;
+  $('overlay').querySelector('[data-act="resume"]').focus();
+}
+function resumeGame() { $('overlay').hidden = true; game.resume(); }
+function endEarly() {
+  const wasPlaying = game.state === 'play';
+  if (wasPlaying) game.pause();
+  if (confirm('End this game and see your results?')) game.end(true);
+  else if (wasPlaying) game.resume();
+}
+$('overlay').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const act = b.id === 'start' ? 'start' : b.dataset.act;
+  if (act === 'start' || act === 'restart') { if (act === 'restart') game.stop(); startGame(); }
+  if (act === 'resume') resumeGame();
+  if (act === 'end') endEarly();
 });
+$('pause').addEventListener('click', () => (game.state === 'paused' ? resumeGame() : pauseGame()));
+$('end').addEventListener('click', endEarly);
+$('res-again').addEventListener('click', () => { location.hash = '#play'; startGame(); });
+let learnFocus = [];
+$('res-learn').addEventListener('click', () => { learnFocus = lastNext.slice(); location.hash = '#learn'; });
 rec.onSign((L, source) => {
   if (route === 'play' && game.state === 'play') game.sign(L);
 });
 window.addEventListener('keydown', (e) => {
+  if (route === 'play' && (e.key === 'Escape' || e.key === 'p' || e.key === 'P') && (game.state === 'play' || game.state === 'paused')) {
+    e.preventDefault(); game.state === 'paused' ? resumeGame() : pauseGame(); return;
+  }
   if (e.metaKey || e.ctrlKey || e.altKey || route !== 'play' || game.state !== 'play') return;
   if (rec.state === 'on' || rec.state === 'loading') return; // keyboard only when there is no camera
   const L = e.key.toUpperCase();
@@ -210,6 +261,10 @@ function renderProgress() {
     const note = s && s.hits + s.misses ? `${Math.round(100 * s.hits / (s.hits + s.misses))}% hit` : 'not played';
     return `<div class="bar"><span>${L}</span><span class="track" role="img" aria-label="Letter ${L}: box ${box || 'none'} of 5"><i style="width:${box * 20}%"></i></span><small>${note}</small></div>`;
   }).join('');
+  const recent = store.history.slice(-8);
+  const maxS = Math.max(1, ...recent.map((h) => h.score));
+  $('trend').innerHTML = recent.length ? recent.map((h) => `<div class="bar"><span title="${new Date(h.at).toLocaleString('en-GB')}">${new Date(h.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span><span class="track" role="img" aria-label="Score ${h.score}"><i style="width:${Math.round(100 * h.score / maxS)}%"></i></span><small>${h.score} · ${h.accuracy == null ? '–' : Math.round(h.accuracy * 100) + '%'}</small></div>`).join('')
+    : '<p class="muted small">Finish a round to see your trend.</p>';
   const hard = LETTERS.map((L) => [L, store.letters[L]]).filter(([, s]) => s && s.hits + s.misses >= 3)
     .map(([L, s]) => [L, s.hits / (s.hits + s.misses)]).filter(([, a]) => a < 1).sort((a, b) => a[1] - b[1]).slice(0, 3);
   $('hardest').innerHTML = hard.length ? hard.map(([L, a]) => `<span class="chip warn">${L} · ${Math.round(a * 100)}%</span>`).join('')
@@ -225,7 +280,7 @@ $('reset-progress').addEventListener('click', () => {
 
 // ---------- routing ----------
 let route = 'home';
-const SCREENS = ['home', 'learn', 'play', 'progress'];
+const SCREENS = ['home', 'learn', 'play', 'results', 'progress'];
 function go() {
   const r = location.hash.slice(1);
   route = SCREENS.includes(r) ? r : 'home';
@@ -233,12 +288,13 @@ function go() {
   document.querySelectorAll('[data-nav]').forEach((a) => {
     if (a.dataset.nav === route) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
-  if (route !== 'play' && game.state === 'play') { game.stop(); $('overlay').innerHTML = `<p class="px big">PAUSED</p><p class="px">Round ended when you left Play</p><button class="btn arcade-btn" id="start" type="button">PRESS START</button>`; $('overlay').hidden = false; }
+  if (route !== 'play' && game.state === 'play') pauseGame();
+  document.querySelectorAll('[data-nav]').forEach((a) => { if (route === 'results' && a.dataset.nav === 'play') a.setAttribute('aria-current', 'page'); });
   if (route === 'home') renderHome();
-  if (route === 'learn') { renderLearn(); usePreview(checkTarget ? $('check') : null); }
+  if (route === 'learn') { renderLearn(); usePreview(checkTarget ? $('check') : null); if (learnFocus.length) { setTimeout(() => document.querySelector('.letter-card.focus')?.scrollIntoView({ block: 'center' }), 50); } }
   if (route === 'play') usePreview($('screen-play'));
   if (route === 'progress') renderProgress();
-  if (route === 'home' || route === 'progress') rec.stop();
+  if (route === 'home' || route === 'progress' || route === 'results') rec.stop();
   window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', go);

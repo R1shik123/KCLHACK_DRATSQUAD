@@ -42,9 +42,24 @@ export class Game {
 
   stop() { cancelAnimationFrame(this.raf); this.state = 'idle'; }
 
+  pause() {
+    if (this.state !== 'play') return false;
+    this.state = 'paused'; this.pausedAt = performance.now();
+    cancelAnimationFrame(this.raf);
+    return true;
+  }
+
+  resume() {
+    if (this.state !== 'paused') return;
+    const gap = performance.now() - this.pausedAt;
+    for (const e of this.enemies) e.born += gap; // reaction times exclude paused time
+    this.state = 'play'; this.last = performance.now();
+    this.raf = requestAnimationFrame(this._tick);
+  }
+
   get letters() { return LEVEL_LETTERS[this.level - 1]; }
   box(L) { return this.boxes[L] || 1; }
-  stat(L) { return (this.stats[L] ||= { hits: 0, misses: 0 }); }
+  stat(L) { return (this.stats[L] ||= { hits: 0, misses: 0, times: [] }); }
 
   pickLetter() {
     const onScreen = new Set(this.enemies.map((e) => e.letter));
@@ -81,6 +96,7 @@ export class Game {
     this.score += 100 * mult;
     this.hits++; this.levelHits++;
     this.stat(letter).hits++;
+    this.stat(letter).times.push(reaction);
     this.boxes[letter] = Math.min(5, this.box(letter) + 1);
     this.outcome(true);
     this.burst(t.x, t.y, t.color);
@@ -128,7 +144,8 @@ export class Game {
     this.hud();
   }
 
-  end() {
+  end(early = false) {
+    if (this.state !== 'play' && this.state !== 'paused') return;
     this.state = 'over';
     cancelAnimationFrame(this.raf);
     this.draw();
@@ -140,7 +157,7 @@ export class Game {
       score: this.score, level: this.level, hits: this.hits, escapes: this.escapes,
       accuracy: attempts ? this.hits / attempts : null,
       avgReaction: this.reactions.length ? this.reactions.reduce((a, b) => a + b, 0) / this.reactions.length : null,
-      reactions: this.reactions.slice(), stats: this.stats, bestCombo: this.best, toPractise,
+      reactions: this.reactions.slice(), stats: this.stats, bestCombo: this.best, toPractise, early,
     });
   }
 

@@ -96,6 +96,10 @@
             <div><span>LIVES</span><b id="hud-lives">♥♥♥</b></div>
             <div><span>COMBO</span><b id="hud-combo">x1</b></div>
           </div>
+          <div class="hud-actions">
+            <button class="btn hud-btn" id="pause" type="button" disabled>Pause <kbd>P</kbd></button>
+            <button class="btn hud-btn" id="end" type="button" disabled>End game</button>
+          </div>
           <div class="crt">
             <canvas id="game" aria-label="Game screen"></canvas>
             <div class="scanlines" aria-hidden="true"></div>
@@ -121,6 +125,36 @@
       </div>
     </section>
 
+    <!-- RESULTS -->
+    <section class="screen" id="screen-results" data-screen="results" aria-labelledby="results-title" hidden>
+      <header class="hello">
+        <p class="eyebrow" id="res-kicker">Round complete</p>
+        <h1 id="results-title">Your results</h1>
+      </header>
+      <div class="card hero res-hero">
+        <span class="hero-kicker">Score</span>
+        <span class="numeral" id="res-score">0</span>
+      </div>
+      <div class="stats">
+        <div class="card stat"><p class="label">Accuracy</p><p class="numeral mid" id="res-acc">–</p></div>
+        <div class="card stat"><p class="label">Letters attempted</p><p class="numeral mid" id="res-attempted">0</p></div>
+      </div>
+      <div class="card">
+        <p class="label">Slowest letters · average time to sign</p>
+        <div class="bars" id="res-slow"></div>
+      </div>
+      <div class="card">
+        <p class="label">Per letter</p>
+        <div class="table-wrap"><table class="res-table" id="res-table"></table></div>
+      </div>
+      <div class="card">
+        <p class="label">Practise next</p>
+        <div class="chips" id="res-next"></div>
+        <button class="btn ghost" id="res-learn" type="button">Open these in Learn</button>
+      </div>
+      <button class="btn" id="res-again" type="button">Play again</button>
+    </section>
+
     <!-- PROGRESS -->
     <section class="screen" id="screen-progress" data-screen="progress" aria-labelledby="progress-title" hidden>
       <header class="hello">
@@ -141,6 +175,10 @@
         <p class="label">Mastery by letter</p>
         <div class="bars" id="bars"></div>
         <p class="muted small">Mastery is the letter's Leitner box (1–5). Shooting a letter moves it up a box; letting it fall sends it back to box 1. Box 4 or higher counts as mastered.</p>
+      </div>
+      <div class="card">
+        <p class="label">Recent rounds · score and accuracy</p>
+        <div class="bars" id="trend"></div>
       </div>
       <div class="card">
         <p class="label">Hardest letters</p>
