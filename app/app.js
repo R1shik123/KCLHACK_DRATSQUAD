@@ -1,6 +1,7 @@
 /* Signfall app shell: routing, storage, camera states, Learn, Play and Progress. */
 import { Recognizer, LETTERS } from './recognizer.js';
 import { Game, LEVEL_LETTERS } from './game.js';
+import { Music } from './music.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -74,7 +75,7 @@ function renderMute() {
   $('mute').setAttribute('aria-pressed', String(store.muted));
   $('mute').setAttribute('aria-label', store.muted ? 'Unmute sound' : 'Mute sound');
 }
-$('mute').addEventListener('click', () => { store.muted = !store.muted; save(); renderMute(); });
+$('mute').addEventListener('click', () => { store.muted = !store.muted; save(); renderMute(); Music.setMuted(store.muted); });
 
 // ---------- Home ----------
 function renderHome() {
@@ -140,8 +141,10 @@ const game = new Game($('game'), {
     $('hud-lives').textContent = '♥'.repeat(Math.max(0, h.lives)) || '–';
     $('hud-combo').textContent = `x${h.mult}`;
     $('hud-letters').textContent = h.letters.join(' ');
+    if (game?.state === 'play') Music.setLevel(h.level);
   },
   onEnd: (r) => {
+    Music.stop();
     for (const [L, s] of Object.entries(r.stats)) {
       const t = (store.letters[L] ||= { hits: 0, misses: 0 });
       t.hits += s.hits; t.misses += s.misses;
@@ -192,11 +195,14 @@ function startGame() {
   blip('start');
   if (rec.state === 'off') rec.start();
   game.start();
+  Music.setMuted(!!store.muted);
+  Music.start(1);
   setPlayButtons(true);
   $('pause').focus();
 }
 function pauseGame() {
   if (!game.pause()) return;
+  Music.pause();
   $('overlay').innerHTML = `<p class="px big">PAUSED</p><div class="btn-row">
     <button class="btn arcade-btn" type="button" data-act="resume">RESUME</button>
     <button class="btn ghost-dark" type="button" data-act="restart">RESTART</button>
@@ -204,7 +210,7 @@ function pauseGame() {
   $('overlay').hidden = false;
   $('overlay').querySelector('[data-act="resume"]').focus();
 }
-function resumeGame() { $('overlay').hidden = true; game.resume(); }
+function resumeGame() { $('overlay').hidden = true; game.resume(); Music.resume(); }
 function endEarly() {
   const wasPlaying = game.state === 'play';
   if (wasPlaying) game.pause();
@@ -215,7 +221,7 @@ $('overlay').addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
   const act = b.id === 'start' ? 'start' : b.dataset.act;
-  if (act === 'start' || act === 'restart') { if (act === 'restart') game.stop(); startGame(); }
+  if (act === 'start' || act === 'restart') { if (act === 'restart') { game.stop(); Music.stop(); } startGame(); }
   if (act === 'resume') resumeGame();
   if (act === 'end') endEarly();
 });

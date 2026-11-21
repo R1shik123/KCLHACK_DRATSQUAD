@@ -83,3 +83,6 @@ Control Room's road engine has its own setup: see `roads/README.md`.
 - Powered by TfL Open Data. Contains OS data © Crown copyright and database rights 2016, and Geomni UK Map data © and database rights 2019.
 - Weather by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 - Built with JetBrains tools and Claude.
+
+## Credits
+Music: *In the Hall of the Mountain King*, Edvard Grieg (public domain), 8-bit arrangement by Signblast.
