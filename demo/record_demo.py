@@ -141,11 +141,15 @@ class Rig:
             tv.evaluate(CAPTION_JS, "CONTROL ROOM: close a road, see the simulated knock-on effect")
             tv.fill("#q", arg)
             tv.press("#q", "Enter")
-            tv.wait_for_selector("#results button, #results li", timeout=10000)
-            tv.click("#results button, #results li")
+            tv.wait_for_selector("#results button", timeout=10000)
+            tv.locator("#results button").first.click()  # the Close button on the first match
+            tv.wait_for_timeout(1500)
+            tv.locator("#impact").scroll_into_view_if_needed()
             tv.wait_for_timeout(2500)
             if tv.locator("#brief").count():
                 tv.click("#brief")
+                tv.wait_for_timeout(1200)
+                tv.locator("#brief-text").scroll_into_view_if_needed()
 
     def finish(self):
         paths = {}

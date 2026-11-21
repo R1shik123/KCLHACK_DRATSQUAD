@@ -471,8 +471,9 @@
     }
     s.media = { video: cam.video, image: still ? still.url : cam.image, r: 2, c: 0, w: 40, h: 20 };
     s.text(22, 1, 'LIVE', { fg: 'R', flash: true });
-    const clipTime = cam.modified ? new Date(cam.modified) : still && still.modified;
-    s.text(22, 6, clipTime ? `CLIP FROM ${ago(clipTime)}` : 'TFL JAMCAM', { fg: 'W' });
+    // The camera's own file timestamp (Last-Modified) is accurate; TfL's listing "modified" field is not.
+    const clipTime = still && still.modified;
+    s.text(22, 6, clipTime ? `UPDATED ${ago(clipTime)}` : 'TFL JAMCAM', { fg: 'W' });
     if (cam.distance >= 20) s.right(22, `${dist(cam.distance)} AWAY`, { fg: 'C' });
     else s.right(22, 'SEARCHED', { fg: 'C' });
     if (cam.view) s.text(23, 1, cam.view.toUpperCase().slice(0, 29), { fg: 'C' });
@@ -497,7 +498,7 @@
       ['TFL ARRIVALS', arr, (v) => `${v.length} TRAINS`, (v) => newest(v.map(t => t.timestamp))],
       ['OPEN-METEO', wx, () => 'FORECAST', (v) => new Date(v.current.time + ':00Z')],
       ['TFL CYCLE HIRE', bikes, (v) => `${v.length} DOCKS`, () => null],
-      ['TFL JAMCAMS', cams, (v) => `${v.length} CAMS`, (v) => newest(v.map(c => c.modified).filter(Boolean))],
+      ['TFL JAMCAMS', cams, (v) => `${v.length} CAMS`, () => null],
     ];
     rows.forEach(([name, r, count, when], i) => {
       const row = 5 + i;
