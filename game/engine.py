@@ -113,7 +113,7 @@ def describe(j, r, table, with_times):
 def why(j, base, r, table):
     """One line explaining how this route differs from the original."""
     if r == base:
-        return "Back on the original route: same time."
+        return "Same route as the original: same time, 0 points."
     diffs = []
     for i in range(len(j["legs"])):
         a, b = table.get(leg_key(j, base, i)), table.get(leg_key(j, r, i))
