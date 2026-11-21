@@ -1,0 +1,248 @@
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { gzipSync } from 'node:zlib';
+import { WebSocketServer } from 'ws';
+import { BusFeed, POLL_MS } from './lib/feed.mjs';
+import { StopCatalog } from './lib/stops.mjs';
+import { SIM_CONFIG, SimulationSupervisor, cullSnapshot } from './lib/simulation.mjs';
+import { TrainFeed } from './lib/trains.mjs';
+import { CrowdingFeed } from './lib/crowding.mjs';
+import { History } from './lib/history.mjs';
+import { StopControl } from './lib/stop-control.mjs';
+
+const root = new URL('./', import.meta.url);
+const files = new Map([
+  ['/', ['index.html', 'text/html; charset=utf-8']],
+  ['/index.html', ['index.html', 'text/html; charset=utf-8']],
+  ['/ui.js', ['public/ui.js', 'text/javascript; charset=utf-8']],
+  ['/lib/congestion.mjs', ['lib/congestion.mjs', 'text/javascript; charset=utf-8']],
+  ['/app.js', ['public/app.js', 'text/javascript; charset=utf-8']],
+  ['/config.js', ['public/config.js', 'text/javascript; charset=utf-8']],
+  ['/traffic.js', ['public/traffic.js', 'text/javascript; charset=utf-8']],
+  ['/sim-cars.js', ['public/sim-cars.js', 'text/javascript; charset=utf-8']],
+  ['/trains.js', ['public/trains.js', 'text/javascript; charset=utf-8']],
+  ['/stop-tools.js', ['public/stop-tools.js', 'text/javascript; charset=utf-8']],
+  ['/performance.js', ['public/performance.js', 'text/javascript; charset=utf-8']],
+  ['/performance-settings.js', ['public/performance-settings.js', 'text/javascript; charset=utf-8']],
+  ['/cameras.js', ['public/cameras.js', 'text/javascript; charset=utf-8']],
+  ['/cameras.css', ['public/cameras.css', 'text/css; charset=utf-8']],
+  ['/bus-layer.js', ['public/bus-layer.js', 'text/javascript; charset=utf-8']],
+  ['/styles.css', ['public/styles.css', 'text/css; charset=utf-8']],
+  ['/lib/motion.mjs', ['lib/motion.mjs', 'text/javascript; charset=utf-8']],
+  ['/lib/personality.mjs', ['lib/personality.mjs', 'text/javascript; charset=utf-8']],
+  ['/vendor/three.module.js', ['node_modules/three/build/three.module.js', 'text/javascript; charset=utf-8']],
+  ['/vendor/BufferGeometryUtils.js', ['node_modules/three/examples/jsm/utils/BufferGeometryUtils.js', 'text/javascript; charset=utf-8']],
+  ['/vendor/maplibre-gl.mjs', ['node_modules/maplibre-gl/dist/maplibre-gl.mjs', 'text/javascript; charset=utf-8']],
+  ['/vendor/maplibre-gl-worker.mjs', ['node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs', 'text/javascript; charset=utf-8']],
+  ['/vendor/maplibre-gl-shared.mjs', ['node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs', 'text/javascript; charset=utf-8']],
+  ['/vendor/maplibre-gl.css', ['node_modules/maplibre-gl/dist/maplibre-gl.css', 'text/css; charset=utf-8']],
+]);
+const POST_ROUTES = new Set(['/api/simulation/reinitialize', '/api/simulation/pause', '/api/simulation/closures', '/api/simulation/clock', '/api/stops']);
+// A slow client skips snapshots rather than queueing them without bound.
+const MAX_BUFFERED_BYTES = 4 * 2 ** 20;
+
+// State-changing requests must come from this page, not another site the browser has open.
+const sameOrigin = req => !req.headers.origin || new URL(req.headers.origin).host === req.headers.host;
+
+async function readJson(req, limit = 1024) {
+  let text = '';
+  for await (const chunk of req) {
+    text += chunk;
+    if (text.length > limit) throw Object.assign(new Error('Request body too large'), { status: 413 });
+  }
+  try { return text ? JSON.parse(text) : {}; } catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
+}
+
+export function createApp({ feed = new BusFeed({ apiKey: process.env.BODS_API_KEY?.trim() }), stops = null, simulation = null, trains = null, crowding = null, stopControl = null } = {}) {
+  const server = createServer(async (req, res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    const pathname = new URL(req.url, 'http://localhost').pathname;
+    const json = (status, value) => res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }).end(JSON.stringify(value));
+    if (req.method === 'POST' && pathname === '/api/stops') {
+      // {action: 'stop-line', line} | {action: 'stop-bus', id} | {action: 'stop-route', route} | {action: 'reopen', key}
+      if (!stopControl) return json(503, { error: 'Stopping is not configured' });
+      if (!sameOrigin(req)) return json(403, { error: 'Cross-origin request refused' });
+      try { return json(200, await stopControl.act(await readJson(req))); } catch (error) { return json(error.status ?? 500, { error: error.message }); }
+    }
+    if (req.method === 'POST' && POST_ROUTES.has(pathname)) {
+      if (!simulation) return json(503, { error: 'Simulation not configured' });
+      if (!sameOrigin(req)) return json(403, { error: 'Cross-origin request refused' });
+      try {
+        const body = await readJson(req);
+        if (pathname === '/api/simulation/closures') {
+          // {action: 'close', lon, lat} or {action: 'reopen', id}; the worker checks the road exists.
+          const [west, south, east, north] = SIM_CONFIG.network.bbox;
+          if (body.action === 'close') {
+            if (!Number.isFinite(body.lon) || !Number.isFinite(body.lat) || body.lon < west || body.lon > east || body.lat < south || body.lat > north) return json(400, { error: 'lon and lat must be inside the simulated area' });
+            return json(200, { closures: await simulation.closure({ action: 'close', lon: body.lon, lat: body.lat }) });
+          }
+          if (body.action === 'reopen') {
+            if (!Number.isInteger(body.id) || body.id < 0) return json(400, { error: 'id must be a closure id' });
+            return json(200, { closures: await simulation.closure({ action: 'reopen', closureId: body.id }) });
+          }
+          return json(400, { error: "action must be 'close' or 'reopen'" });
+        }
+        if (pathname === '/api/simulation/pause') {
+          if (typeof body.paused !== 'boolean') return json(400, { error: 'paused must be true or false' });
+          if (!simulation.setPaused(body.paused)) return json(409, { error: 'No running simulation to pause' });
+          return json(200, simulation.getStatus());
+        }
+        if (pathname === '/api/simulation/clock') return json(200, simulation.setClock(body));
+        return json(202, { job: simulation.reinitialize({ population: body.population }) });
+      } catch (error) {
+        return json(error.status ?? 500, { error: error.message });
+      }
+    }
+    if (!['GET', 'HEAD'].includes(req.method)) {
+      res.writeHead(405, { Allow: POST_ROUTES.has(pathname) ? 'POST' : 'GET, HEAD' }).end();
+      return;
+    }
+    try {
+      let body;
+      if (pathname === '/api/buses') {
+        const snapshot = await feed.getSnapshot();
+        if (stopControl) snapshot.buses = stopControl.applyToBuses(snapshot.buses);
+        if (stops) {
+          snapshot.buses = snapshot.buses.map(bus => ({ ...bus, routeStop: stops.match(bus) }));
+          snapshot.stopDataStatus = stops.status;
+          snapshot.stopDataUpdatedAt = stops.updatedAt;
+        }
+        res.statusCode = ['unconfigured', 'unavailable'].includes(snapshot.status) ? 503 : 200;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        body = Buffer.from(JSON.stringify(snapshot));
+      } else if (pathname === '/api/history') {
+        // Past closure sessions (newest first) and the running one, if any.
+        return json(200, stopControl?.history?.list() ?? { sessions: [], current: null });
+      } else if (pathname === '/api/stops') {
+        if (!stopControl) return json(503, { items: [] });
+        return json(200, stopControl.summary());
+      } else if (pathname === '/api/trains/busyness') {
+        // Station crowding spread along the lines (live or typical per station); not on-train load.
+        if (!crowding) return json(503, { type: 'FeatureCollection', features: [] });
+        body = Buffer.from(JSON.stringify(crowding.geojson));
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache');
+      } else if (pathname === '/api/trains' || pathname === '/api/trains/lines') {
+        // Estimated train positions from TfL arrival predictions; the TfL key never leaves the server.
+        if (!trains) return json(503, { status: 'unavailable', trains: [] });
+        body = Buffer.from(JSON.stringify(pathname === '/api/trains' ? trains.getSnapshot() : trains.linesGeoJSON));
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', pathname === '/api/trains' ? 'no-store' : 'no-cache');
+      } else if (pathname === '/api/simulation/signals') {
+        // Static stop-line positions of every signal approach, [lon, lat, ...]; states arrive as 'SIG1' frames.
+        if (!simulation) return json(503, { error: 'Simulation not configured' });
+        body = Buffer.from(JSON.stringify({ simulated: true, positions: Array.from(simulation.signalPositions ?? [], x => Math.round(x * 1e6) / 1e6) }));
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache');
+      } else if (pathname === '/api/simulation/status') {
+        if (!simulation) return json(503, { lifecycle: 'unavailable', reason: 'Simulation not configured' });
+        return json(200, simulation.getStatus());
+      } else {
+        const file = files.get(pathname);
+        if (!file) { res.writeHead(404).end('Not found'); return; }
+        body = await readFile(new URL(file[0], root));
+        res.setHeader('Content-Type', file[1]);
+        res.setHeader('Cache-Control', pathname.startsWith('/vendor/') ? 'public, max-age=86400' : 'no-cache');
+      }
+      if (/\bgzip\b/.test(req.headers['accept-encoding'] ?? '') && body.length > 1024) {
+        body = gzipSync(body);
+        res.setHeader('Content-Encoding', 'gzip');
+      }
+      res.setHeader('Vary', 'Accept-Encoding');
+      res.setHeader('Content-Length', body.length);
+      res.end(req.method === 'HEAD' ? undefined : body);
+    } catch {
+      res.writeHead(500, { 'Content-Type': 'application/json' }).end(JSON.stringify({ status: 'unavailable', buses: [] }));
+    }
+  });
+  if (simulation) attachSimulationStream(server, simulation);
+  return server;
+}
+
+// Same-origin WebSocket: JSON text frames for status/progress, binary frames for snapshots.
+// Each client may send {type: 'viewport', bbox: [w, s, e, n] | null, snapshots: boolean, signals: boolean}.
+// Signal states ('SIG1' binary frames, 2 Hz) cover the union of the boxes of clients that asked for them.
+export function attachSimulationStream(server, simulation) {
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
+  server.on('upgrade', (req, socket, head) => {
+    if (new URL(req.url, 'http://localhost').pathname !== '/api/simulation/stream' || !sameOrigin(req)) { socket.destroy(); return; }
+    wss.handleUpgrade(req, socket, head, ws => wss.emit('connection', ws));
+  });
+  const send = (ws, frame) => { if (ws.readyState === ws.OPEN) ws.send(frame); };
+  const sendSnapshot = (ws, payload) => {
+    if (!ws.wantsSnapshots || ws.bufferedAmount > MAX_BUFFERED_BYTES) { ws.dropped = (ws.dropped ?? 0) + 1; return; }
+    send(ws, ws.bbox ? cullSnapshot(payload, ws.bbox) : payload);
+  };
+  wss.on('connection', ws => {
+    ws.wantsSnapshots = true;
+    ws.on('message', (data, binary) => {
+      if (binary) return;
+      try {
+        const message = JSON.parse(data);
+        if (message.type !== 'viewport') return;
+        ws.wantsSnapshots = message.snapshots !== false;
+        ws.bbox = Array.isArray(message.bbox) && message.bbox.length === 4 && message.bbox.every(Number.isFinite) ? message.bbox : null;
+        ws.wantsSignals = message.signals === true && ws.bbox !== null;
+        updateSignalViews();
+      } catch { /* ignore malformed client messages */ }
+    });
+    ws.on('close', updateSignalViews);
+    send(ws, JSON.stringify({ type: 'status', status: simulation.getStatus() }));
+    if (simulation.snapshot) sendSnapshot(ws, simulation.snapshot);
+    if (simulation.impact) send(ws, JSON.stringify({ type: 'impact', geojson: simulation.impact }));
+  });
+  function updateSignalViews() {
+    simulation.setSignalViews?.([...wss.clients].filter(ws => ws.wantsSignals).map(ws => ws.bbox).slice(0, 64));
+  }
+  simulation.on('signals', frame => {
+    for (const ws of wss.clients) if (ws.wantsSignals && ws.bufferedAmount <= MAX_BUFFERED_BYTES) send(ws, frame);
+  });
+  const broadcast = frame => { for (const ws of wss.clients) send(ws, frame); };
+  simulation.on('snapshot', payload => { for (const ws of wss.clients) sendSnapshot(ws, payload); });
+  simulation.on('status', status => broadcast(JSON.stringify({ type: 'status', status })));
+  simulation.on('run', status => broadcast(JSON.stringify({ type: 'run', status })));
+  simulation.on('impact', geojson => broadcast(JSON.stringify({ type: 'impact', geojson })));
+  simulation.on('progress', progress => broadcast(JSON.stringify({ type: 'progress', progress })));
+  server.on('close', () => wss.close());
+  return wss;
+}
+
+if (import.meta.main) {
+  const port = Number(process.env.PORT || 3000);
+  const stops = new StopCatalog();
+  const feed = new BusFeed({ apiKey: process.env.BODS_API_KEY?.trim() });
+  const simulation = new SimulationSupervisor({ population: Number(process.env.SIM_POPULATION) || undefined, roads: process.env.SIM_ROADS || undefined }).start();
+  const trains = new TrainFeed({ appKey: process.env.TFL_APP_KEY?.trim() });
+  const crowding = new CrowdingFeed({ trains, appKey: process.env.TFL_APP_KEY?.trim() });
+  const stopControl = new StopControl({ trains, feed, stops, simulation });
+  stopControl.history = new History({ stopControl, simulation }).start();
+  const server = createApp({ feed, stops, simulation, trains, crowding, stopControl });
+  void stops.start();
+  void trains.start().then(() => crowding.start());
+  // Bus observations continue server-side whether or not any browser shows the overlay.
+  void feed.getSnapshot();
+  const busTimer = setInterval(() => void feed.getSnapshot(), POLL_MS);
+  server.listen(port, '127.0.0.1', () => {
+    console.log(`London map: http://localhost:${port}`);
+    if (!process.env.BODS_API_KEY?.trim()) console.log('Live feed not configured. Set BODS_API_KEY in .env (see README.md).');
+    if (simulation.lifecycle === 'unavailable') console.log(`Car simulation unavailable: ${simulation.reason}`);
+  });
+  // The simulation worker would otherwise keep a server that never started alive.
+  server.on('error', async error => { console.error(`Server could not start: ${error.code}`); clearInterval(busTimer); trains.stop(); crowding.stop(); await simulation.close(); process.exit(1); });
+  let stopping = false;
+  const shutdown = async () => {
+    if (stopping) return;
+    stopping = true;
+    clearInterval(busTimer);
+    trains.stop();
+    crowding.stop();
+    stopControl.history.stop();
+    server.close();
+    await simulation.close();
+    process.exit(0);
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
