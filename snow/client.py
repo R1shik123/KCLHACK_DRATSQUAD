@@ -53,6 +53,7 @@ def _connect():
         database=env.get("SNOWFLAKE_DATABASE", "LONDONFAX"),
         schema=env.get("SNOWFLAKE_SCHEMA", "APP"),
         client_session_keep_alive=True,
+        session_parameters={"TIMEZONE": "Europe/London"},  # Snowflake defaults to US Pacific
     )
     return _conn
 

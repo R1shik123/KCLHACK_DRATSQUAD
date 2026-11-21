@@ -111,7 +111,7 @@ async def status_logger():
             if snow.configured():
                 try:
                     lines = await fetch_tfl_status(http)
-                    now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+                    now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S +00:00")  # explicit UTC
                     rows = []
                     for l in lines:
                         for s in l.get("lineStatuses", []):
