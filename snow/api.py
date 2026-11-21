@@ -22,11 +22,29 @@ _last_log = {"at": None, "rows": 0, "error": None}
 
 
 def _fallback_briefing(p):
-    """Plain template used when Cortex isn't available: restates the given numbers, nothing more."""
-    closed = ", ".join(p.get("closures", [])[:6]) or "no closures"
-    facts = "; ".join(f"{k.replace('_', ' ')}: {v}" for k, v in (p.get("metrics") or {}).items()
-                      if isinstance(v, (int, float, str)))
-    return f"Scenario: {closed}. Simulated estimates — {facts or 'no impact measured yet'}."
+    """Plain template used when Cortex isn't available: restates the given numbers in sentences, nothing more."""
+    m = p.get("metrics") or {}
+    closed = " and ".join(str(c) for c in (p.get("closures") or [])[:4]) or "nothing"
+    get = lambda *ks: next((m[k] for k in ks if m.get(k) not in (None, "")), None)  # noqa: E731
+    total, hit = get("sampleTrips", "journeys"), get("reroutedTrips", "affectedTrips", "affectedJourneys")
+    extra, cut = get("extraMinutesPerReroutedTrip", "extraMinutesPerAffectedTrip", "avgExtraMinutes"), get("unreachableTrips", "cutOff")
+    parts = []
+    if hit is not None and total is not None:
+        parts.append(f"In our simulation, closing {closed} reroutes {hit} of {total} sample car trips"
+                     + (f", adding about {extra} minutes to each" if extra is not None else "") + ".")
+    if cut:
+        parts.append(f"{cut} sample trips have no route left.")
+    roads = get("slowedRoads", "worstRoads")
+    if isinstance(roads, list) and roads:
+        names = [r.get("name", r) if isinstance(r, dict) else r for r in roads[:3]]
+        parts.append("Diverted traffic mostly moves onto " + ", ".join(map(str, names)) + ".")
+    cost = get("costPerHour", "cost")
+    if isinstance(cost, dict) and {"low", "high"} <= cost.keys():
+        parts.append(f"Estimated cost: £{cost['low']:,}–£{cost['high']:,} per hour, depending on the assumptions.")
+    if not parts:  # unknown shape: list whatever numbers we were given
+        facts = "; ".join(f"{k}: {v}" for k, v in m.items() if isinstance(v, (int, float, str)))
+        parts.append(f"Scenario: {closed}. " + (facts + "." if facts else "No impact measured yet."))
+    return " ".join(parts) + " All figures are simulated estimates."
 
 
 @router.post("/api/briefing")
