@@ -95,13 +95,22 @@ def status():
     return info
 
 
+async def fetch_tfl_status(http=None):
+    """Line status via the shared, cached TfL client (adds the team app key; survives rate limits)."""
+    import tfl
+    data = await tfl.get_json("/Line/Mode/tube,elizabeth-line,overground,dlr,tram/Status", ttl=45)
+    if not isinstance(data, list):
+        raise RuntimeError(f"unexpected TfL answer: {str(data)[:120]}")
+    return data
+
+
 async def status_logger():
     """Every 2 minutes, copy TfL's line status into Snowflake: an audit trail of exactly what TfL said, when."""
     async with httpx.AsyncClient(timeout=20) as http:
         while True:
             if snow.configured():
                 try:
-                    lines = (await http.get(TFL_STATUS)).json()
+                    lines = await fetch_tfl_status(http)
                     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
                     rows = []
                     for l in lines:

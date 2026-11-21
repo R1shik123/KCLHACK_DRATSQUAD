@@ -96,6 +96,21 @@ window.LFExtra[600] = async (data) => {
 | `/api/roads/*` (see Agent 2 plan) | Agent 2 | Control Room: close roads, stop lines, impact |
 | `/api/game/*` (see Agent 3 plan) | Agent 3 | Rooms, rounds, edits, scoring |
 
+## TfL rate limit — read this
+The venue's Wi-Fi gives every team one public IP, and TfL's no-key limit is per IP; we already hit
+`429 Rate limit is exceeded`. So:
+- **Server-side Python:** never call `api.tfl.gov.uk` directly. Use the shared client:
+  `from tfl import get_json` then `data = await get_json("/Journey/JourneyResults/910GGODMAYS/to/940GZZLUSKS", {"mode": "tube,walking"}, ttl=300)`.
+  It adds the team's TfL app key from `.env` (`TFL_APP_KEY=`), caches results and serves the last good copy on a 429.
+- **Browser code:** fetch `/api/tfl/<path>` (same path and query as TfL), never TfL directly.
+- Cache aggressively and precompute; never call TfL in a per-second loop.
+
+## Snowflake status (tested 15:50)
+Connected: the service user signs in with the key on the hosting Mac, and the tables `LINE_STATUS`,
+`SCENARIOS` and `GAME_RESULTS` exist. **Snowflake AI functions (AI_COMPLETE etc.) are blocked on
+trial accounts**, so `/api/briefing` currently returns `source:"fallback"` (a plain summary of the
+numbers). Build the UI to show either.
+
 ## Accuracy answer (everyone must be able to say this)
 "Live data is shown exactly as TfL and Open-Meteo publish it, with the time on screen. Page 199
 shows each feed's freshness. Game journey times come from TfL's own Journey Planner. Road traffic is

@@ -39,6 +39,25 @@ def health():
 
 app.include_router(snow_api.router)
 
+# Browser pages fetch TfL through here, so the venue's shared IP doesn't exhaust TfL's anonymous limit:
+# one cached upstream request serves every phone and page, with the team's app key added.
+import tfl  # noqa: E402
+from fastapi import Request  # noqa: E402
+
+TFL_ALLOWED = ("Line/", "StopPoint", "Journey/", "Place/", "BikePoint", "Mode/")
+TFL_TTL = {"Arrivals": 15, "Status": 45, "BikePoint": 45, "Journey/": 300, "Place/": 600, "Search": 3600}
+
+
+@app.get("/api/tfl/{path:path}")
+async def tfl_proxy(path: str, request: Request):
+    if not path.startswith(TFL_ALLOWED):
+        return JSONResponse({"error": "not allowed"}, status_code=404)
+    ttl = next((t for k, t in TFL_TTL.items() if k in path), 60)
+    try:
+        return await tfl.get_json("/" + path, dict(request.query_params), ttl=ttl)
+    except tfl.TflError as e:
+        return JSONResponse({"error": str(e)}, status_code=e.status)
+
 # Feature routers owned by the other agents (see docs/TEAM.md):
 #   game/api.py  -> router, prefix /api/game   (Agent 3, Game Mode)
 #   roads/api.py -> router, prefix /api/roads  (Agent 2, Control Room + driving times)

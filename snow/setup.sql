@@ -47,8 +47,8 @@ CREATE TABLE IF NOT EXISTS GAME_RESULTS (
 GRANT ALL ON ALL TABLES IN SCHEMA LONDONFAX.APP TO ROLE LONDONFAX_APP;
 GRANT ALL ON FUTURE TABLES IN SCHEMA LONDONFAX.APP TO ROLE LONDONFAX_APP;
 
--- Quick check that Cortex works in your account (should return a sentence):
-SELECT SNOWFLAKE.CORTEX.COMPLETE('mistral-large2', 'Say hello to London in five words.');
+-- Quick check that Cortex AI works (new accounts must use AI_COMPLETE, not CORTEX.COMPLETE):
+SELECT AI_COMPLETE('claude-3-5-sonnet', 'Say hello to London in five words.');
 
 -- Finally: copy your account identifier (orgname-accountname) for Londonfax:
 SELECT CURRENT_ORGANIZATION_NAME() || '-' || CURRENT_ACCOUNT_NAME() AS ACCOUNT_IDENTIFIER;

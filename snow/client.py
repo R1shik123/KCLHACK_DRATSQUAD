@@ -78,17 +78,29 @@ def query(sql, params=None):
             cur.close()
 
 
-def cortex(prompt, models=("claude-3-5-sonnet", "mistral-large2", "llama3.1-70b", "snowflake-arctic")):
-    """Ask Snowflake Cortex to write text. Returns (text, model) or (None, None)."""
+MODELS = ("claude-sonnet-4-5", "claude-4-sonnet", "claude-3-7-sonnet", "claude-3-5-sonnet",
+          "mistral-large2", "llama3.3-70b", "llama3.1-70b", "snowflake-arctic")
+_working_model = None
+
+
+def cortex(prompt, models=MODELS):
+    """Ask Snowflake Cortex AI to write text with AI_COMPLETE (new accounts can't use the legacy
+    SNOWFLAKE.CORTEX.COMPLETE). Returns (text, model) or (None, None)."""
+    global _working_model
     if not configured():
         return None, None
+    order = ([_working_model] if _working_model else []) + [m for m in models if m != _working_model]
     last = None
-    for m in models:
+    for m in order:
         try:
-            rows = query("select snowflake.cortex.complete(%s, %s) as t", (m, prompt))
-            if rows:
-                return rows[0]["t"].strip(), m
-        except Exception as e:  # model not available in this region: try the next one
+            rows = query("select ai_complete(%s, %s) as t", (m, prompt))
+            if rows and rows[0]["t"]:
+                _working_model = m
+                text = rows[0]["t"]
+                if isinstance(text, str) and text.startswith('"') and text.endswith('"'):
+                    text = json.loads(text)
+                return str(text).strip(), m
+        except Exception as e:  # model not available in this account/region: try the next one
             last = e
     if last:
         raise last

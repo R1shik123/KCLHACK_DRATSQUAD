@@ -5,7 +5,9 @@
  * Responses are cached briefly so page flips feel instant and we stay polite.
  */
 (function () {
-  const TFL = 'https://api.tfl.gov.uk';
+  // Through our server (cached, team app key, survives the venue's shared-IP rate limit);
+  // straight to TfL only when the page is opened as a plain file.
+  const TFL = location.protocol.startsWith('http') ? '/api/tfl' : 'https://api.tfl.gov.uk';
   const cache = new Map();
 
   async function getJSON(url, ttl) {
