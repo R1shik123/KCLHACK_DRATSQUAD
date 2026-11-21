@@ -5,7 +5,11 @@
 const TASKS = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
 const MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 
+// LETTERS: the set the current UI has descriptions for. ALL_LETTERS: everything the recogniser can tell apart.
+// Not included: E M N S T (fists that differ only in thumb detail), G H P Q (need orientation), K R X (need
+// crossing/hook features), O (too close to C), J Z (need motion). Better 11 solid letters than 26 flaky ones.
 export const LETTERS = ['A', 'B', 'C', 'D', 'I', 'L', 'V', 'Y'];
+export const ALL_LETTERS = ['A', 'B', 'C', 'D', 'F', 'I', 'L', 'U', 'V', 'W', 'Y'];
 
 // [thumb, index, middle, ring, pinky, spread]
 const TEMPLATES = {
@@ -17,6 +21,9 @@ const TEMPLATES = {
   L: [1, 1, 0, 0, 0, 0],
   V: [0.3, 1, 1, 0, 0, 0.8],
   Y: [1, 0, 0, 0, 1, 0],
+  U: [0.3, 1, 1, 0, 0, 0],   // V with the two fingers together
+  W: [0.3, 1, 1, 1, 0, 0.5], // index, middle, ring up
+  F: [0.3, 0, 1, 1, 1, 0],   // index folded to the thumb, three fingers up
 };
 const WEIGHTS = [0.7, 1, 1, 1, 1, 0.6];
 const ACCEPT = 0.3;          // max weighted distance to accept a letter
@@ -43,7 +50,7 @@ export function features(lm) {
 export function classify(lm) {
   const f = features(lm);
   const wsum = WEIGHTS.reduce((a, b) => a + b, 0);
-  const scores = LETTERS.map((L) => {
+  const scores = ALL_LETTERS.map((L) => {
     const t = TEMPLATES[L];
     let d = 0;
     for (let i = 0; i < 6; i++) d += WEIGHTS[i] * (f.v[i] - t[i]) ** 2;
