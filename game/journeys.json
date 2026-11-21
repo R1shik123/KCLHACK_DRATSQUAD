@@ -1,0 +1,138 @@
+[
+  {
+    "id": "goodmayes-southken",
+    "title": "Goodmayes to South Kensington",
+    "stops": [
+      {"name": "Goodmayes", "ll": [51.5655, 0.1110]},
+      {"name": "Liverpool Street", "ll": [51.5178, -0.0823], "alts": [
+        {"name": "Whitechapel", "ll": [51.5195, -0.0597]},
+        {"name": "Stratford", "ll": [51.5416, -0.0034]},
+        {"name": "Bond Street", "ll": [51.5142, -0.1494]}
+      ]},
+      {"name": "South Kensington", "ll": [51.4941, -0.1738]}
+    ],
+    "legs": [
+      {"mode": "elizabeth-line", "alts": ["bus", "national-rail"]},
+      {"mode": "tube", "alts": ["bus", "elizabeth-line"]}
+    ]
+  },
+  {
+    "id": "kcl-greenwich",
+    "title": "KCL Strand to Greenwich",
+    "stops": [
+      {"name": "KCL Strand", "ll": [51.5115, -0.1160]},
+      {"name": "Tower Gateway", "ll": [51.5106, -0.0743], "alts": [
+        {"name": "Bank", "ll": [51.5133, -0.0886]},
+        {"name": "Canary Wharf", "ll": [51.5054, -0.0209]},
+        {"name": "London Bridge", "ll": [51.5052, -0.0864]}
+      ]},
+      {"name": "Cutty Sark (Greenwich)", "ll": [51.4826, -0.0096]}
+    ],
+    "legs": [
+      {"mode": "bus", "alts": ["tube", "walking"]},
+      {"mode": "dlr", "alts": ["bus", "national-rail"]}
+    ]
+  },
+  {
+    "id": "brixton-canarywharf",
+    "title": "Brixton to Canary Wharf",
+    "stops": [
+      {"name": "Brixton", "ll": [51.4627, -0.1145]},
+      {"name": "Oxford Circus", "ll": [51.5152, -0.1419], "alts": [
+        {"name": "Green Park", "ll": [51.5067, -0.1428]},
+        {"name": "Stockwell", "ll": [51.4723, -0.1229]},
+        {"name": "Vauxhall", "ll": [51.4861, -0.1253]}
+      ]},
+      {"name": "Canary Wharf", "ll": [51.5054, -0.0209]}
+    ],
+    "legs": [
+      {"mode": "tube", "alts": ["bus", "overground"]},
+      {"mode": "tube", "alts": ["elizabeth-line", "bus"]}
+    ]
+  },
+  {
+    "id": "ealing-tower",
+    "title": "Ealing Broadway to Tower of London",
+    "stops": [
+      {"name": "Ealing Broadway", "ll": [51.5150, -0.3017]},
+      {"name": "Hammersmith", "ll": [51.4936, -0.2251], "alts": [
+        {"name": "Acton Town", "ll": [51.5028, -0.2801]},
+        {"name": "Shepherd's Bush", "ll": [51.5046, -0.2187]},
+        {"name": "Earl's Court", "ll": [51.4920, -0.1934]}
+      ]},
+      {"name": "Tower Hill", "ll": [51.5098, -0.0766]}
+    ],
+    "legs": [
+      {"mode": "drive", "alts": ["bus", "tube"]},
+      {"mode": "tube", "alts": ["bus", "elizabeth-line"]}
+    ]
+  },
+  {
+    "id": "walthamstow-battersea",
+    "title": "Walthamstow to Battersea Power Station",
+    "stops": [
+      {"name": "Walthamstow Central", "ll": [51.5830, -0.0197]},
+      {"name": "Euston", "ll": [51.5282, -0.1337], "alts": [
+        {"name": "King's Cross", "ll": [51.5308, -0.1238]},
+        {"name": "Oxford Circus", "ll": [51.5152, -0.1419]},
+        {"name": "Vauxhall", "ll": [51.4861, -0.1253]}
+      ]},
+      {"name": "Battersea Power Station", "ll": [51.4796, -0.1424]}
+    ],
+    "legs": [
+      {"mode": "tube", "alts": ["overground", "bus"]},
+      {"mode": "tube", "alts": ["bus"]}
+    ]
+  },
+  {
+    "id": "wembley-shoreditch",
+    "title": "Wembley Park to Shoreditch High Street",
+    "stops": [
+      {"name": "Wembley Park", "ll": [51.5635, -0.2795]},
+      {"name": "Highbury & Islington", "ll": [51.5461, -0.1040], "alts": [
+        {"name": "Canada Water", "ll": [51.4982, -0.0502]},
+        {"name": "Whitechapel", "ll": [51.5195, -0.0597]},
+        {"name": "Liverpool Street", "ll": [51.5178, -0.0823]}
+      ]},
+      {"name": "Shoreditch High Street", "ll": [51.5233, -0.0752]}
+    ],
+    "legs": [
+      {"mode": "tube", "alts": ["bus", "overground"]},
+      {"mode": "overground", "alts": ["bus", "walking"]}
+    ]
+  },
+  {
+    "id": "heathrow-kingscross",
+    "title": "Heathrow T2&3 to King's Cross",
+    "stops": [
+      {"name": "Heathrow T2&3", "ll": [51.4713, -0.4524]},
+      {"name": "Paddington", "ll": [51.5154, -0.1755], "alts": [
+        {"name": "Farringdon", "ll": [51.5203, -0.1053]},
+        {"name": "Tottenham Court Road", "ll": [51.5165, -0.1310]},
+        {"name": "Hammersmith", "ll": [51.4936, -0.2251]}
+      ]},
+      {"name": "King's Cross", "ll": [51.5308, -0.1238]}
+    ],
+    "legs": [
+      {"mode": "elizabeth-line", "alts": ["tube", "bus"]},
+      {"mode": "bus", "alts": ["tube", "walking"]}
+    ]
+  },
+  {
+    "id": "stratford-hampstead",
+    "title": "Stratford to Hampstead",
+    "stops": [
+      {"name": "Stratford", "ll": [51.5416, -0.0034]},
+      {"name": "Tottenham Court Road", "ll": [51.5165, -0.1310], "alts": [
+        {"name": "Bank", "ll": [51.5133, -0.0886]},
+        {"name": "Camden Town", "ll": [51.5392, -0.1426]},
+        {"name": "Highbury & Islington", "ll": [51.5461, -0.1040]}
+      ]},
+      {"name": "Hampstead", "ll": [51.5568, -0.1780]}
+    ],
+    "legs": [
+      {"mode": "tube", "alts": ["elizabeth-line", "bus"]},
+      {"mode": "tube", "alts": ["bus", "overground"]}
+    ]
+  }
+]
