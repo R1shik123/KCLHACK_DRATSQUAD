@@ -3,6 +3,7 @@ import { Recognizer, HoldTracker } from "./recognizer.js";
 import { Sprint, Spell, Echo, Mystery, Duel, dailyWords } from "./games.js";
 import { store, todayKey } from "./store.js";
 import { icon } from "./icons.js";
+import { EchoLevel, EchoRun, echoPools, echoStars, echoHighest, echoTotalStars } from "./echo.js";
 
 const load = (p) => fetch(p, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(p); return r.json(); });
 const [C, RCFG, HS, WL, TOK] = await Promise.all([
@@ -193,6 +194,7 @@ function handSkeleton() {
 function GameIntro(id) {
   if (!GAMES[id] || id === "daily") { location.hash = "#play"; return; }
   if (id === "practice") { PracticeSetup(); return; }
+  if (id === "echo") { EchoPath(); return; }
   const g = C.games[id];
   view.innerHTML = `<section class="screen narrow">
     <a class="nav-back" href="#play">${icon("chevron-left")}${esc(C.tabs.play)}</a>
@@ -231,11 +233,11 @@ function CameraSetup() {
   allow.onclick = async () => {
     allow.disabled = true; msg.textContent = C.camera.loading;
     const s = await rec.start();
-    if (s === "on") { store.set({ input: "camera" }); location.hash = `#run-${pending.id}`; return; }
+    if (s === "on") { store.set({ input: "camera" }); location.hash = pending.next || `#run-${pending.id}`; return; }
     allow.disabled = false;
     msg.textContent = s === "denied" ? C.camera.denied : C.camera.unavailable;
   };
-  $("#kbd").onclick = () => { store.set({ input: "keyboard" }); location.hash = `#run-${pending.id}`; };
+  $("#kbd").onclick = () => { store.set({ input: "keyboard" }); location.hash = pending.next || `#run-${pending.id}`; };
 }
 
 // ---------- S3 Practice setup ----------
@@ -623,6 +625,136 @@ function Settings() {
   };
 }
 
+// ---------- E1 Echo level path ----------
+function EchoPath() {
+  const E = C.echo, hi = echoHighest(), next = hi + 1, last = Math.max(10, hi + 6);
+  let html = "", prevStage = null;
+  for (let n = 1; n <= last; n++) {
+    const L = new EchoLevel(n), st = n <= hi ? "cleared" : n === next ? "next" : "locked";
+    if (L.stage !== prevStage) { html += `<p class="eyebrow path-stage">${esc(E.stages[L.stage])}</p>`; prevStage = L.stage; }
+    const stars = echoStars(n);
+    const x = Math.round(Math.sin(n * 0.9) * 34);
+    html += `<a class="node ${st}${L.isBoss ? " boss" : ""}" style="--x:${x}%" ${st === "locked" ? `aria-disabled="true" title="${esc(E.locked)}"` : `href="#echo-${n}"`} aria-label="${fmt(E.level, { level: n })}${L.isBoss ? ", " + esc(E.boss) : ""}">
+      <span class="disc">${st === "locked" ? icon("lock") : L.isBoss ? `${icon("crown")}<b>${n}</b>` : n}</span>
+      ${st === "cleared" ? `<span class="stars">${[0, 1, 2].map((i) => `<span class="${i < stars ? "on" : ""}">${icon("star")}</span>`).join("")}</span>` : ""}
+    </a>`;
+  }
+  view.innerHTML = `<section class="screen narrow" ${gameAttr("echo")}>
+    <a class="nav-back" href="#play">${icon("chevron-left")}${esc(C.tabs.play)}</a>
+    <div class="banner" ${gameAttr("echo")}>
+      <div class="floaters" aria-hidden="true"><span>E</span><span>C</span><span>O</span></div>
+      <span class="big-icon">${icon("repeat")}</span>
+      <h1 class="t-large">${esc(E.mapTitle)}</h1>
+      <p class="t-body">${esc(E.mapBody)}</p>
+    </div>
+    <div class="stats"><div class="stat"><span class="n">${echoTotalStars()}</span><span class="l">${esc(E.starsTotal)}</span></div><div class="stat"><span class="n">${hi}</span><span class="l">${esc(E.bestLevel)}</span></div><div class="stat"><span class="n">${next}</span><span class="l">${esc(fmt(E.level, { level: "" }).trim())}</span></div></div>
+    <div ${gameAttr("echo")}><a class="btn primary" href="#echo-${next}">${icon("play")}${fmt(E.continue, { level: next })}</a></div>
+    <div class="path">${html}</div>
+  </section>`;
+  setTimeout(() => view.querySelector(".node.next")?.scrollIntoView({ block: "center", behavior: "smooth" }), 400);
+}
+
+// ---------- E2 Echo play + E3 result ----------
+function EchoPlay(arg) {
+  const n = Math.max(1, parseInt(arg, 10) || 1);
+  if (n > echoHighest() + 1) { location.hash = "#game-echo"; return; }
+  if (!store.data.input) { pending = { id: "echo", next: `#echo-${n}` }; location.hash = "#camera"; return; }
+  const E = C.echo, level = new EchoLevel(n);
+  let keyboard = store.data.input !== "camera", finished = false;
+  const what = level.usesWords ? (level.items === 1 ? E.itemsWord : fmt(E.itemsWords, { count: level.items })) : fmt(E.itemsLetters, { count: level.items });
+  view.innerHTML = `<section class="screen narrow" ${gameAttr("echo")}>
+    <div class="play-bar">
+      <span class="title"><span class="badge-icon grad">${icon(level.isBoss ? "crown" : "repeat")}</span><span class="stack" style="gap:0"><span class="t-headline">${fmt(E.level, { level: n })}</span><span class="t-footnote muted">${esc(level.isBoss ? E.boss : E.stages[level.stage])}</span></span></span>
+      <div class="right"><span class="hearts" id="hearts"></span><a class="icon-btn" href="#game-echo" aria-label="${esc(E.map)}">${icon("x")}</a></div>
+    </div>
+    <div class="stage" ${gameAttr("echo")} id="stage">
+      <div class="spread"><span class="t-footnote muted" id="round"></span><button class="btn text" id="again">${esc(E.showAgain)}</button></div>
+      <div class="meter"><i id="prog"></i></div>
+      <div id="area" class="stack-md"></div>
+      <p class="flash" id="flash" aria-live="polite"></p>
+      <div class="cam" id="cam"><div class="placeholder" id="ph"></div><span class="status" id="status" hidden></span></div>
+      <p class="t-footnote muted" style="text-align:center">${esc(fmt(E.intro, { rounds: level.rounds, items: what }).replace(/&#39;/g, "'"))}</p>
+    </div>
+  </section>`;
+  const area = $("#area"), status = $("#status"), ph = $("#ph"), flash = $("#flash");
+  const run = new EchoRun({ level: n, solid: RCFG.solid, pools: echoPools(WL.words, RCFG.solid), C: E, onChange: (ev) => {
+    if (ev === "tick") beep([660]);
+    if (ev === "hit") { beep([880]); queueMicrotask(() => burst($("#area .slot.just"), 8)); }
+    if (ev === "round") { beep([660, 990], 0.1); queueMicrotask(() => burst($("#area"), 18)); }
+    queueMicrotask(draw);
+  } });
+  function draw() {
+    if (finished) return;
+    if (run.phase === "cleared" || run.phase === "failed") { result(); return; }
+    $("#hearts").innerHTML = [0, 1, 2].map((i) => `<span class="${i < run.hearts ? "full" : "lost"}">${icon("heart")}</span>`).join("");
+    $("#round").textContent = tx(E.round, { n: run.round, total: level.rounds });
+    $("#prog").style.width = `${((run.round - 1) / level.rounds) * 100}%`;
+    const again = $("#again"); again.disabled = run.showAgainUsed || run.phase !== "input";
+    flash.textContent = run.note || ""; flash.className = "flash";
+    if (run.phase === "watch") {
+      const item = run.shownIndex !== null ? run.items[run.shownIndex] : null;
+      area.innerHTML = (item && level.usesWords
+        ? `<div class="word echo-word lit">${[...item].map((ch) => `<span class="ch">${ch}</span>`).join("")}</div>`
+        : `<div class="target ${item ? "lit pop" : "dim"}" id="tgt">${item || "•"}</div>`)
+        + `<p class="t-callout muted" style="text-align:center">${esc(E.watch)}</p>`;
+    } else {
+      let k = 0;
+      area.innerHTML = `<div class="slots" id="tgt">${run.items.map((it) => `<span class="slot-group">${[...it].map(() => { const i = k++; return `<span class="slot ${i < run.entered ? "done" : i === run.entered ? "cur" : ""}${i === run.entered - 1 ? " just" : ""}">${i < run.entered ? run.targets[i] : ""}</span>`; }).join("")}</span>`).join("")}</div>
+        <p class="t-callout muted" style="text-align:center">${esc(E.yourTurn)} · ${fmt(E.signLetter, { n: Math.min(run.entered + 1, run.targets.length), total: run.targets.length })}</p>`;
+    }
+  }
+  function result() {
+    finished = true; run.clear(); rec.stop();
+    const ok = run.phase === "cleared";
+    if (ok) store.recordGame({ mode: "echo", score: 0, letters: run.targets.length * level.rounds, accuracy: null });
+    view.innerHTML = `<section class="screen narrow" ${gameAttr("echo")}>
+      <div class="score-card">
+        <span class="eyebrow">${esc(ok ? E.cleared : E.failed)}</span>
+        <span class="t-title1">${fmt(E.level, { level: n })}</span>
+        <span class="big-stars">${[0, 1, 2].map((i) => `<span class="${ok && i < run.stars ? "on" : ""}" style="--i:${i}">${icon("star")}</span>`).join("")}</span>
+        ${ok ? "" : `<p class="t-callout muted">${fmt(E.failedBody, { sequence: run.items.join(" ") })}</p>`}
+      </div>
+      <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="stat"><span class="n">${Math.max(0, run.hearts)}</span><span class="l">${esc(E.heartsLeft)}</span></div><div class="stat"><span class="n">${esc(run.showAgainUsed ? E.yes : E.no)}</span><span class="l">${esc(E.shownAgain)}</span></div></div>
+      <div class="actions">
+        ${ok ? `<a class="btn primary" href="#echo-${n + 1}">${esc(E.next)}</a><button class="btn text" id="replay">${esc(E.replay)}</button>` : `<button class="btn primary" id="replay">${esc(E.retry)}</button>`}
+        <a class="btn text" href="#game-echo">${esc(E.map)}</a>
+      </div>
+    </section>`;
+    $("#replay").onclick = () => route();
+    if (ok) setTimeout(() => burst($(".score-card"), run.stars === 3 ? 30 : 16), 300);
+  }
+  $("#again").onclick = () => run.showAgain();
+
+  // input (same 8-frame hold as every game)
+  const hold = new HoldTracker(RCFG.stableFrames, RCFG.rearmFrames);
+  const setStatus = (html) => { status.hidden = !html; status.innerHTML = html || ""; };
+  const off = rec.onFrame((f) => {
+    if (keyboard || finished || run.phase !== "input") { hold.reset(); return; }
+    const r = hold.push(f.letter);
+    if (!f.hand) setStatus(esc(C.camera.noHand));
+    else if (r.letter) { setStatus(`<span class="sig">${r.letter}${ringSvg()}</span>`); setRing(status.querySelector(".sig"), r.progress); }
+    else setStatus("");
+    if (r.fired) run.sign(r.fired);
+  });
+  const onKey = (e) => {
+    if (!keyboard || finished || e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toUpperCase();
+    if (k.length === 1 && k >= "A" && k <= "Z") { e.preventDefault(); run.sign(k); }
+  };
+  document.addEventListener("keydown", onKey);
+  onLeave(() => { off(); document.removeEventListener("keydown", onKey); run.clear(); rec.stop(); finished = true; });
+  ph.innerHTML = keyboard ? `${icon("keyboard")}<span class="t-subhead">${esc(C.camera.keyboardOn)}</span>` : `${icon("camera")}<span class="t-subhead">${esc(C.camera.loading)}</span>`;
+  if (!keyboard) {
+    rec.mount($("#cam"));
+    rec.start().then((s) => {
+      if (finished) return;
+      if (s === "on") { ph.innerHTML = ""; setStatus(esc(C.camera.noHand)); }
+      else { keyboard = true; ph.innerHTML = `${icon("keyboard")}<span class="t-subhead">${esc(C.camera.keyboardOn)}</span>`; toast(s === "denied" ? C.camera.denied : C.camera.unavailable); }
+    });
+  }
+  draw();
+}
+
 // ---------- Motion layer: bursts, count-up, spotlight, tilt, scroll reveal ----------
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 function burst(el, n = 12) {
@@ -675,9 +807,9 @@ function setupReveal() {
 }
 
 // ---------- Router ----------
-const ROUTES = { play: Home, game: GameIntro, camera: CameraSetup, practice: PracticeSetup, run: Run, results: Results, learn: Learn, letter: LetterDetail, progress: Progress, settings: Settings };
-const TAB_OF = { play: "play", game: "play", camera: "play", practice: "play", run: "play", results: "play", learn: "learn", letter: "learn", progress: "progress" };
-const FOCUS = new Set(["camera", "run", "results"]);
+const ROUTES = { play: Home, echo: EchoPlay, game: GameIntro, camera: CameraSetup, practice: PracticeSetup, run: Run, results: Results, learn: Learn, letter: LetterDetail, progress: Progress, settings: Settings };
+const TAB_OF = { play: "play", echo: "play", game: "play", camera: "play", practice: "play", run: "play", results: "play", learn: "learn", letter: "learn", progress: "progress" };
+const FOCUS = new Set(["camera", "run", "results", "echo"]);
 const TITLES = { learn: C.tabs.learn, letter: C.tabs.learn, progress: C.tabs.progress, settings: C.settings.title, practice: C.games.practice.title, results: C.results.eyebrow, camera: C.camera.title };
 
 function route() {

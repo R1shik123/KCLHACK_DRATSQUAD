@@ -1,0 +1,47 @@
+/* Echo levels: E1 path, E2 play, E3 result (docs/PRODUCT.md "Echo levels"). Built from tokens + motion.css. */
+
+/* E1: winding level path */
+.path { display: grid; gap: 14px; justify-items: center; padding-block: var(--space-sm) var(--space-xl); position: relative; }
+.path-stage { justify-self: stretch; text-align: center; padding-top: var(--space-sm); display: flex; align-items: center; gap: var(--space-sm); }
+.path-stage::before, .path-stage::after { content: ""; flex: 1; height: 1px; background: var(--color-hairline); }
+.node { display: grid; justify-items: center; gap: 6px; text-decoration: none; color: inherit; transform: translateX(var(--x, 0)); }
+.node .disc {
+  width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; position: relative;
+  font-size: var(--type-title2-size); font-weight: 600; font-variant-numeric: tabular-nums;
+  background: var(--color-surface); box-shadow: var(--shadow-sm); transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) var(--ease);
+}
+.node.boss .disc { width: 88px; height: 88px; border-radius: 30px; }
+.node.boss .disc svg { width: 20px; height: 20px; position: absolute; top: 10px; }
+.node.boss .disc b { margin-top: 14px; }
+.node.cleared .disc { background: linear-gradient(135deg, var(--g1), var(--g2)); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 10px 22px -10px var(--g2); }
+.node.next .disc { color: var(--g2); box-shadow: inset 0 0 0 3px var(--g2), var(--shadow-md); animation: beckon 1.8s var(--ease) infinite; }
+.node.locked { cursor: default; }
+.node.locked .disc { background: var(--color-fill); color: var(--color-muted); box-shadow: none; }
+.node.locked .disc svg { width: 20px; height: 20px; }
+a.node:hover .disc { transform: translateY(-3px) scale(1.05); }
+@keyframes beckon { 0%, 100% { box-shadow: inset 0 0 0 3px var(--g2), 0 0 0 0 color-mix(in srgb, var(--g2) 40%, transparent); } 60% { box-shadow: inset 0 0 0 3px var(--g2), 0 0 0 14px transparent; } }
+.node .stars { display: flex; gap: 2px; }
+.node .stars svg, .big-stars svg { fill: var(--color-hairline); stroke: none; }
+.node .stars svg { width: 14px; height: 14px; }
+.node .stars .on svg, .big-stars .on svg { fill: var(--g2); }
+
+/* E2: hearts, progress, slots grouped per word */
+.hearts { display: flex; gap: 3px; }
+.hearts svg { width: 20px; height: 20px; color: var(--g2); }
+.hearts .full svg { fill: var(--g2); }
+.hearts .lost svg { color: var(--color-hairline); fill: none; }
+.stage .meter > i { background: linear-gradient(90deg, var(--g1), var(--g2)); transition: width var(--dur-slow) var(--ease); }
+.slots { gap: 14px; }
+.slot-group { display: flex; gap: 6px; }
+.slot.just { animation: pop .45s var(--ease-spring); }
+.echo-word { justify-self: center; padding: 14px 26px; border-radius: 28px; background: linear-gradient(135deg, var(--g1), var(--g2)); color: #fff; box-shadow: 0 22px 44px -18px var(--g2); animation: pop .4s var(--ease-spring); min-height: 0; }
+.echo-word .ch { color: #fff; min-width: .6em; }
+.stage .btn.text[disabled] { opacity: .35; }
+
+/* E3: stars that land one by one */
+.big-stars { display: flex; gap: 10px; padding-block: var(--space-xs); position: relative; }
+.big-stars svg { width: 44px; height: 44px; }
+.big-stars .on { animation: star-in .6s var(--ease-spring) both; animation-delay: calc(var(--i) * 180ms + 200ms); }
+@keyframes star-in { from { transform: scale(.3) rotate(-30deg); } to { transform: none; } }
+
+@media (prefers-reduced-motion: reduce) { .node.next .disc, .big-stars .on, .echo-word, .slot.just { animation: none !important; } }
