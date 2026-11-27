@@ -1,4 +1,4 @@
-/* GENERATED from design/tokens.json by design/build-tokens.mjs. Do not edit by hand. Tokens v1.0.0 */
+/* GENERATED from design/tokens.json by design/build-tokens.mjs. Do not edit by hand. Tokens v1.1.0 */
 :root {
   color-scheme: light;
   --color-bg: #FFFFFF;
@@ -117,3 +117,25 @@
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
 }
+:root { --color-accent-soft: color-mix(in srgb, var(--color-accent) 14%, transparent); }
+:root[data-accent="blue"] { --color-accent: #0071E3; --color-accent-ink: #FFFFFF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="blue"] { --color-accent: #0A84FF; --color-accent-ink: #FFFFFF; } }
+:root[data-theme="dark"][data-accent="blue"] { --color-accent: #0A84FF; --color-accent-ink: #FFFFFF; }
+:root[data-accent="indigo"] { --color-accent: #5856D6; --color-accent-ink: #FFFFFF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="indigo"] { --color-accent: #5E5CE6; --color-accent-ink: #FFFFFF; } }
+:root[data-theme="dark"][data-accent="indigo"] { --color-accent: #5E5CE6; --color-accent-ink: #FFFFFF; }
+:root[data-accent="purple"] { --color-accent: #9B3FD1; --color-accent-ink: #FFFFFF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="purple"] { --color-accent: #BF5AF2; --color-accent-ink: #FFFFFF; } }
+:root[data-theme="dark"][data-accent="purple"] { --color-accent: #BF5AF2; --color-accent-ink: #FFFFFF; }
+:root[data-accent="pink"] { --color-accent: #D6204E; --color-accent-ink: #FFFFFF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="pink"] { --color-accent: #FF375F; --color-accent-ink: #FFFFFF; } }
+:root[data-theme="dark"][data-accent="pink"] { --color-accent: #FF375F; --color-accent-ink: #FFFFFF; }
+:root[data-accent="orange"] { --color-accent: #C25700; --color-accent-ink: #FFFFFF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="orange"] { --color-accent: #FF9F0A; --color-accent-ink: #1D1D1F; } }
+:root[data-theme="dark"][data-accent="orange"] { --color-accent: #FF9F0A; --color-accent-ink: #1D1D1F; }
+:root[data-accent="green"] { --color-accent: #1F7A35; --color-accent-ink: #FFFFFF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="green"] { --color-accent: #30D158; --color-accent-ink: #1D1D1F; } }
+:root[data-theme="dark"][data-accent="green"] { --color-accent: #30D158; --color-accent-ink: #1D1D1F; }
+:root[data-accent="graphite"] { --color-accent: #1D1D1F; --color-accent-ink: #FFFFFF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="graphite"] { --color-accent: #F5F5F7; --color-accent-ink: #1D1D1F; } }
+:root[data-theme="dark"][data-accent="graphite"] { --color-accent: #F5F5F7; --color-accent-ink: #1D1D1F; }

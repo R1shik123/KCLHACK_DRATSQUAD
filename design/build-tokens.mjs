@@ -53,7 +53,21 @@ ${colors(t.color.dark)}
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
 }
-`;
+${accentCss()}`;
+
+// Selectable accents (Settings). :root[data-accent] beats the base palette; the dark variants beat it again in dark mode.
+function accentCss() {
+  if (!t.accents) return "";
+  const soft = Math.round((t.accentSoftOpacity ?? 0.14) * 100);
+  let out = `:root { --color-accent-soft: color-mix(in srgb, var(--color-accent) ${soft}%, transparent); }\n`;
+  for (const [id, a] of Object.entries(t.accents)) {
+    if (id.startsWith("$") || id === "default") continue;
+    out += `:root[data-accent="${id}"] { --color-accent: ${a.light}; --color-accent-ink: ${a.inkLight}; }\n`;
+    out += `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="${id}"] { --color-accent: ${a.dark}; --color-accent-ink: ${a.inkDark}; } }\n`;
+    out += `:root[data-theme="dark"][data-accent="${id}"] { --color-accent: ${a.dark}; --color-accent-ink: ${a.inkDark}; }\n`;
+  }
+  return out;
+}
 
 writeFileSync(join(here, "tokens.css"), css);
 console.log(`design/tokens.css written (tokens v${t.version})`);

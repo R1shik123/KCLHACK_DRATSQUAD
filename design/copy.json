@@ -1,25 +1,21 @@
 {
   "$schema": "Signblast shared UI text. Both the website and the app use these exact strings. Add keys here before using new text on either side. {x} marks a value filled in at runtime.",
-  "version": "1.1.0",
-
+  "version": "1.2.0",
   "app": {
     "name": "Signblast",
     "tagline": "Learn to fingerspell by playing."
   },
-
   "common": {
     "back": "Back",
     "close": "Close",
     "cancel": "Cancel",
     "start": "Start"
   },
-
   "tabs": {
     "play": "Play",
     "learn": "Learn",
     "progress": "Progress"
   },
-
   "home": {
     "eyebrow": "ASL fingerspelling",
     "title": "Spell with your hands.",
@@ -28,15 +24,26 @@
     "secondary": "Today's five",
     "streak": "{n} day streak",
     "streakNone": "Play today to start a streak",
-    "dailyDone": "Played today · {score}"
+    "dailyDone": "Played today · {score}",
+    "gamesTitle": "Games",
+    "featured": "Today",
+    "best": "Best {score}",
+    "new": "New"
   },
-
   "modes": {
-    "sprint":   { "title": "Sprint",       "body": "60 seconds. Spell as many words as you can." },
-    "daily":    { "title": "Today's five", "body": "The same five words for everyone, once a day." },
-    "practice": { "title": "Practice",     "body": "Pick your letters. No timer, hints on." }
+    "sprint": {
+      "title": "Sprint",
+      "body": "60 seconds. Spell as many words as you can."
+    },
+    "daily": {
+      "title": "Today's five",
+      "body": "The same five words for everyone, once a day."
+    },
+    "practice": {
+      "title": "Practice",
+      "body": "Pick your letters. No timer, hints on."
+    }
   },
-
   "camera": {
     "title": "Turn on your camera",
     "body": "Signblast reads your hand shape on this device. Video never leaves it.",
@@ -49,7 +56,6 @@
     "holding": "Hold it",
     "keyboardOn": "Keyboard mode: type each letter"
   },
-
   "practice": {
     "eyebrow": "Practice",
     "title": "Choose letters",
@@ -59,7 +65,6 @@
     "primary": "Start practice",
     "needMore": "Pick at least one letter"
   },
-
   "play": {
     "eyebrow": "Spell",
     "hint": "Show hint",
@@ -74,7 +79,6 @@
     "streak": "Streak",
     "words": "Words"
   },
-
   "results": {
     "eyebrow": "Results",
     "score": "Score",
@@ -89,7 +93,6 @@
     "dailyTitle": "Today's five, done.",
     "dailyBody": "Come back tomorrow for five new words."
   },
-
   "learn": {
     "eyebrow": "Alphabet",
     "title": "26 handshapes",
@@ -101,9 +104,14 @@
     "notYet": "Keep adjusting your hand",
     "mastered": "Mastered",
     "beta": "Still learning to read this one",
-    "practise": "Practise this letter"
+    "practise": "Practise this letter",
+    "teach": "Teach it my hand",
+    "teachBody": "Hold the sign steady while Signblast records {n} samples. It learns your hand and reads this letter more reliably.",
+    "teaching": "Recording {done} of {n}",
+    "taught": "Learned your {letter}",
+    "forget": "Forget my samples",
+    "personal": "Personalised"
   },
-
   "progress": {
     "eyebrow": "Progress",
     "title": "Your week",
@@ -115,7 +123,6 @@
     "letters": "Mastery by letter",
     "empty": "Play a game to see your week."
   },
-
   "settings": {
     "title": "Settings",
     "hand": "Signing hand",
@@ -130,6 +137,105 @@
     "reset": "Reset progress",
     "resetConfirm": "This clears your streak and mastery on this device.",
     "resetDone": "Progress cleared",
-    "privacy": "Hand tracking runs on your device. Nothing is uploaded."
+    "privacy": "Hand tracking runs on your device. Nothing is uploaded.",
+    "appearance": "Appearance",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "accent": "Accent colour"
+  },
+  "games": {
+    "sprint": {
+      "title": "Sign Sprint",
+      "body": "One letter at a time. 60 seconds. Build a combo.",
+      "rules": [
+        "Sign the letter on screen",
+        "Every 3 in a row raises your multiplier, up to ×5",
+        "8 seconds per letter, then it counts as a miss"
+      ]
+    },
+    "spell": {
+      "title": "Spell It",
+      "body": "Fingerspell whole words before 90 seconds run out.",
+      "rules": [
+        "Sign each letter of the word in order",
+        "Hints halve the points for that letter",
+        "Finish a word for a 200 point bonus"
+      ]
+    },
+    "echo": {
+      "title": "Echo",
+      "body": "Watch a sequence, then sign it back from memory.",
+      "rules": [
+        "Watch the letters flash",
+        "Sign them back in the same order",
+        "Each round adds one letter",
+        "One mistake ends it. One peek per game"
+      ]
+    },
+    "mystery": {
+      "title": "Mystery Word",
+      "body": "Guess the hidden word one signed letter at a time.",
+      "rules": [
+        "Sign a letter to guess it",
+        "Six wrong guesses per word",
+        "Solve words to keep going"
+      ]
+    },
+    "duel": {
+      "title": "Duel",
+      "body": "Two players, one camera. First to sign it wins the point.",
+      "rules": [
+        "Player 1 on the left, Player 2 on the right",
+        "Both race to sign the same letter",
+        "First to 10 points, or the most after 60 seconds"
+      ]
+    },
+    "daily": {
+      "title": "Today's five",
+      "body": "The same five words for everyone, once a day."
+    },
+    "practice": {
+      "title": "Practice",
+      "body": "Pick your letters. No timer, hints on."
+    }
+  },
+  "game": {
+    "start": "Start",
+    "again": "Play again",
+    "rules": "How to play",
+    "best": "Best",
+    "combo": "Combo",
+    "multiplier": "Multiplier",
+    "time": "Time",
+    "score": "Score",
+    "missed": "Missed {letter}",
+    "looksLike": "That looks like {letter}",
+    "nice": "Nice",
+    "echoWatch": "Watch",
+    "echoYourTurn": "Your turn: letter {n} of {total}",
+    "echoPeek": "Peek",
+    "echoPeeks": "{n} peek left",
+    "echoLength": "Length",
+    "echoPerfect": "Perfect. {n} in a row",
+    "echoEnded": "You signed {got}, it was {want}",
+    "echoWas": "The sequence was {seq}",
+    "mysteryClue": "Clue",
+    "mysteryLives": "Lives",
+    "mysterySolved": "Solved: {word}",
+    "mysteryAlready": "Already tried {letter}",
+    "mysteryYes": "Yes, {letter} is in it",
+    "mysteryNo": "No {letter}",
+    "mysteryWas": "The word was {word}",
+    "mysteryCount": "Words solved",
+    "duelP1": "Player 1",
+    "duelP2": "Player 2",
+    "duelPoint": "Point to {player}",
+    "duelWins": "{player} wins",
+    "duelDraw": "It's a draw",
+    "duelNeedCamera": "Duel needs the camera. Two hands, one on each side.",
+    "duelKeys": "Keyboard: Player 1 types the letter, Player 2 holds Shift",
+    "allLetters": "All 26 letters",
+    "reliableLetters": "Reliable letters only"
   }
 }

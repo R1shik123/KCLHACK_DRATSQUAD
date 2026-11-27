@@ -1,7 +1,6 @@
 {
   "$schema": "Signblast recogniser settings. Both the website and the app load these numbers so they accept exactly the same handshapes. Ported from the hackathon app/recognizer.js.",
-  "version": "1.0.0",
-
+  "version": "1.1.0",
   "model": {
     "name": "MediaPipe Hand Landmarker (float16)",
     "url": "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
@@ -10,9 +9,15 @@
     "minPresenceConfidence": 0.5,
     "minTrackingConfidence": 0.5
   },
-
   "features": {
-    "order": ["thumb", "index", "middle", "ring", "pinky", "spread"],
+    "order": [
+      "thumb",
+      "index",
+      "middle",
+      "ring",
+      "pinky",
+      "spread"
+    ],
     "notes": [
       "All distances are divided by palm size = dist(landmark 0, landmark 9). z is weighted 0.5.",
       "thumb = clamp((dist(4,5)/palm - 0.25) / 0.5)",
@@ -22,65 +27,401 @@
       "tipsToThumb = mean of dist(4,k)/palm for k in 8,12,16,20; crossed = (x8 - x12) * (x6 - x10) < 0"
     ]
   },
-
-  "weights": [0.7, 1, 1, 1, 1, 0.6],
+  "weights": [
+    0.7,
+    1,
+    1,
+    1,
+    1,
+    0.6
+  ],
   "accept": 0.3,
   "margin": 0.05,
   "stableFrames": 8,
   "rearmFrames": 14,
-
   "templates": {
-    "A": [0.45, 0, 0, 0, 0, 0.1],
-    "B": [0.15, 1, 1, 1, 1, 0.1],
-    "C": [0.6, 0.5, 0.5, 0.5, 0.5, 0.2],
-    "D": [0.3, 1, 0, 0, 0, 0],
-    "E": [0.1, 0, 0, 0, 0, 0],
-    "F": [0.3, 0, 1, 1, 1, 0],
-    "G": [0.7, 1, 0, 0, 0, 0],
-    "H": [0.3, 1, 1, 0, 0, 0],
-    "I": [0.3, 0, 0, 0, 1, 0],
-    "J": [0.3, 0, 0, 0, 1, 0],
-    "K": [0.7, 1, 1, 0, 0, 0.5],
-    "L": [1, 1, 0, 0, 0, 0],
-    "M": [0.2, 0, 0, 0, 0, 0],
-    "N": [0.2, 0, 0, 0, 0, 0],
-    "O": [0.45, 0.4, 0.4, 0.4, 0.4, 0.1],
-    "P": [0.7, 1, 1, 0, 0, 0.5],
-    "Q": [0.7, 1, 0, 0, 0, 0],
-    "R": [0.3, 1, 1, 0, 0, 0],
-    "S": [0.25, 0, 0, 0, 0, 0],
-    "T": [0.3, 0, 0, 0, 0, 0],
-    "U": [0.3, 1, 1, 0, 0, 0],
-    "V": [0.3, 1, 1, 0, 0, 0.8],
-    "W": [0.3, 1, 1, 1, 0, 0.5],
-    "X": [0.3, 0.45, 0, 0, 0, 0],
-    "Y": [1, 0, 0, 0, 1, 0],
-    "Z": [0.3, 1, 0, 0, 0, 0]
+    "A": [
+      0.45,
+      0,
+      0,
+      0,
+      0,
+      0.1
+    ],
+    "B": [
+      0.15,
+      1,
+      1,
+      1,
+      1,
+      0.1
+    ],
+    "C": [
+      0.6,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.2
+    ],
+    "D": [
+      0.3,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "E": [
+      0.1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "F": [
+      0.3,
+      0,
+      1,
+      1,
+      1,
+      0
+    ],
+    "G": [
+      0.7,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "H": [
+      0.3,
+      1,
+      1,
+      0,
+      0,
+      0
+    ],
+    "I": [
+      0.3,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "J": [
+      0.3,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "K": [
+      0.7,
+      1,
+      1,
+      0,
+      0,
+      0.5
+    ],
+    "L": [
+      1,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "M": [
+      0.2,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "N": [
+      0.2,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "O": [
+      0.45,
+      0.4,
+      0.4,
+      0.4,
+      0.4,
+      0.1
+    ],
+    "P": [
+      0.7,
+      1,
+      1,
+      0,
+      0,
+      0.5
+    ],
+    "Q": [
+      0.7,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "R": [
+      0.3,
+      1,
+      1,
+      0,
+      0,
+      0
+    ],
+    "S": [
+      0.25,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "T": [
+      0.3,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "U": [
+      0.3,
+      1,
+      1,
+      0,
+      0,
+      0
+    ],
+    "V": [
+      0.3,
+      1,
+      1,
+      0,
+      0,
+      0.8
+    ],
+    "W": [
+      0.3,
+      1,
+      1,
+      1,
+      0,
+      0.5
+    ],
+    "X": [
+      0.3,
+      0.45,
+      0,
+      0,
+      0,
+      0
+    ],
+    "Y": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "Z": [
+      0.3,
+      1,
+      0,
+      0,
+      0,
+      0
+    ]
   },
-
   "rules": {
     "$doc": "Extra penalties added to a letter's distance. up/side/down: 0.35 * how far the hand is from upright / sideways / pointing down. near(feature, r): 0.4 * max(0, value - r). touchMax(r, k): max(0, dTouch - r) * k. touchMin(r, k): max(0, r - dTouch) * k. farMin(feature, r, k): max(0, r - value) * k. crossed(p): +p if index and middle cross. notCrossed(p): +p if they don't.",
-    "C": [["touchMin", 0.35, 0.5], ["farMin", "thumbTo8", 0.3, 0.6]],
-    "D": [["up"], ["touchMax", 0.45, 0.4]],
-    "E": [["near", "tipsToThumb", 0.45]],
-    "G": [["side"]],
-    "H": [["side"], ["crossed", 0.15]],
-    "I": [["up"]],
-    "J": [["side"]],
-    "K": [["up"], ["near", "thumbTo10", 0.4]],
-    "M": [["near", "thumbTo13", 0.3]],
-    "N": [["near", "thumbTo9", 0.3]],
-    "O": [["near", "thumbTo8", 0.25]],
-    "P": [["down"], ["near", "thumbTo10", 0.45]],
-    "Q": [["down"]],
-    "R": [["up"], ["notCrossed", 0.25]],
-    "S": [["near", "thumbTo10", 0.3]],
-    "T": [["near", "thumbTo6", 0.3]],
-    "U": [["up"], ["crossed", 0.15]],
-    "V": [["up"]],
-    "X": [["up"]],
-    "Z": [["side"]]
+    "C": [
+      [
+        "touchMin",
+        0.35,
+        0.5
+      ],
+      [
+        "farMin",
+        "thumbTo8",
+        0.3,
+        0.6
+      ]
+    ],
+    "D": [
+      [
+        "up"
+      ],
+      [
+        "touchMax",
+        0.45,
+        0.4
+      ]
+    ],
+    "E": [
+      [
+        "near",
+        "tipsToThumb",
+        0.45
+      ]
+    ],
+    "G": [
+      [
+        "side"
+      ]
+    ],
+    "H": [
+      [
+        "side"
+      ],
+      [
+        "crossed",
+        0.15
+      ]
+    ],
+    "I": [
+      [
+        "up"
+      ]
+    ],
+    "J": [
+      [
+        "side"
+      ]
+    ],
+    "K": [
+      [
+        "up"
+      ],
+      [
+        "near",
+        "thumbTo10",
+        0.4
+      ]
+    ],
+    "M": [
+      [
+        "near",
+        "thumbTo13",
+        0.3
+      ]
+    ],
+    "N": [
+      [
+        "near",
+        "thumbTo9",
+        0.3
+      ]
+    ],
+    "O": [
+      [
+        "near",
+        "thumbTo8",
+        0.25
+      ]
+    ],
+    "P": [
+      [
+        "down"
+      ],
+      [
+        "near",
+        "thumbTo10",
+        0.45
+      ]
+    ],
+    "Q": [
+      [
+        "down"
+      ]
+    ],
+    "R": [
+      [
+        "up"
+      ],
+      [
+        "notCrossed",
+        0.25
+      ]
+    ],
+    "S": [
+      [
+        "near",
+        "thumbTo10",
+        0.3
+      ]
+    ],
+    "T": [
+      [
+        "near",
+        "thumbTo6",
+        0.3
+      ]
+    ],
+    "U": [
+      [
+        "up"
+      ],
+      [
+        "crossed",
+        0.15
+      ]
+    ],
+    "V": [
+      [
+        "up"
+      ]
+    ],
+    "X": [
+      [
+        "up"
+      ]
+    ],
+    "Z": [
+      [
+        "side"
+      ]
+    ]
   },
-
-  "solid": ["A", "B", "C", "D", "F", "I", "L", "U", "V", "W", "Y"]
+  "solid": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "F",
+    "I",
+    "L",
+    "U",
+    "V",
+    "W",
+    "Y"
+  ],
+  "smoothing": {
+    "$doc": "Majority vote over the last `window` classified frames (null counts as a vote). A letter is reported only if it has at least `minVotes`. Reduces flicker between neighbouring shapes.",
+    "window": 5,
+    "minVotes": 3
+  },
+  "calibration": {
+    "$doc": "Personal model: the player records their own handshape per letter (Learn → letter → Teach it my hand). Stored on the device only. For a calibrated letter, distance = (1 - blend) * templateDistance + blend * knnDistance, where knnDistance is the mean Euclidean distance (weighted like the templates) from the live 6-feature vector to the k nearest recorded samples of that letter, divided by sqrt(sum(weights)). Uncalibrated letters use the template only. accept/margin still apply.",
+    "samplesPerLetter": 30,
+    "maxSamples": 60,
+    "k": 5,
+    "blend": 0.6
+  }
 }

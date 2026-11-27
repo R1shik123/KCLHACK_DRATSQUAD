@@ -1,19 +1,246 @@
 {
   "$schema": "Signblast word list, shared by the website and the app. Uppercase A–Z only, 2–6 letters.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "daily": {
     "count": 5,
     "algorithm": "seed = FNV-1a 32-bit hash of the local date 'YYYY-MM-DD'. rng = mulberry32(seed). Shuffle a copy of `words` with Fisher-Yates using rng (for i from n-1 down to 1: j = floor(rng() * (i + 1)); swap i, j). Today's five = the first 5. Both platforms must implement exactly this so everyone gets the same words.",
     "reference": "web/js/engine.js → dailyWords()"
   },
   "words": [
-    "HI", "NO", "YES", "BYE", "CAT", "DOG", "SUN", "FUN", "WOW", "DAY",
-    "BAD", "CAB", "DAD", "LID", "AID", "BID", "FIB", "FLU", "CUB", "BUD",
-    "LAB", "LAD", "FAD", "WAD", "AWL", "FLY", "BUY", "BAY", "LAY", "WAY",
-    "DIAL", "BALD", "CALL", "BALL", "WALL", "FALL", "WILD", "BULB", "CLAY", "DAILY",
-    "LOVE", "HELP", "COOL", "NAME", "KIND", "PLAY", "SIGN", "HAND", "WORD", "BOOK",
-    "TEA", "TOP", "SEA", "MAP", "JAM", "ZOO", "BOX", "KEY", "RED", "GO",
-    "FISH", "MILK", "RAIN", "STAR", "MOON", "TREE", "HOME", "FOOD", "GAME", "CODE",
-    "LIGHT", "HAPPY", "QUIET", "SMILE", "LEARN", "FRIEND", "CALM", "BUILD", "AWAY", "DULL"
-  ]
+    "HI",
+    "NO",
+    "YES",
+    "BYE",
+    "CAT",
+    "DOG",
+    "SUN",
+    "FUN",
+    "WOW",
+    "DAY",
+    "BAD",
+    "CAB",
+    "DAD",
+    "LID",
+    "AID",
+    "BID",
+    "FIB",
+    "FLU",
+    "CUB",
+    "BUD",
+    "LAB",
+    "LAD",
+    "FAD",
+    "WAD",
+    "AWL",
+    "FLY",
+    "BUY",
+    "BAY",
+    "LAY",
+    "WAY",
+    "DIAL",
+    "BALD",
+    "CALL",
+    "BALL",
+    "WALL",
+    "FALL",
+    "WILD",
+    "BULB",
+    "CLAY",
+    "DAILY",
+    "LOVE",
+    "HELP",
+    "COOL",
+    "NAME",
+    "KIND",
+    "PLAY",
+    "SIGN",
+    "HAND",
+    "WORD",
+    "BOOK",
+    "TEA",
+    "TOP",
+    "SEA",
+    "MAP",
+    "JAM",
+    "ZOO",
+    "BOX",
+    "KEY",
+    "RED",
+    "GO",
+    "FISH",
+    "MILK",
+    "RAIN",
+    "STAR",
+    "MOON",
+    "TREE",
+    "HOME",
+    "FOOD",
+    "GAME",
+    "CODE",
+    "LIGHT",
+    "HAPPY",
+    "QUIET",
+    "SMILE",
+    "LEARN",
+    "FRIEND",
+    "CALM",
+    "BUILD",
+    "AWAY",
+    "DULL"
+  ],
+  "spellFirst": "CAB",
+  "spell": [
+    "CAT",
+    "DOG",
+    "SUN",
+    "BUS",
+    "CUP",
+    "BED",
+    "FISH",
+    "BIRD",
+    "CAKE",
+    "LION",
+    "BOOK",
+    "MILK",
+    "BABY",
+    "BALL",
+    "TREE",
+    "CAR",
+    "HAT",
+    "KEY",
+    "PIZZA",
+    "APPLE",
+    "MOON",
+    "STAR",
+    "FROG",
+    "BEE",
+    "COW",
+    "PIG",
+    "EGG",
+    "ICE",
+    "DUCK"
+  ],
+  "mystery": [
+    {
+      "word": "PIZZA",
+      "clue": "Food"
+    },
+    {
+      "word": "TIGER",
+      "clue": "Animal"
+    },
+    {
+      "word": "RIVER",
+      "clue": "Nature"
+    },
+    {
+      "word": "GUITAR",
+      "clue": "Music"
+    },
+    {
+      "word": "PLANET",
+      "clue": "Space"
+    },
+    {
+      "word": "ROBOT",
+      "clue": "Tech"
+    },
+    {
+      "word": "CASTLE",
+      "clue": "Place"
+    },
+    {
+      "word": "BANANA",
+      "clue": "Food"
+    },
+    {
+      "word": "WINTER",
+      "clue": "Season"
+    },
+    {
+      "word": "JACKET",
+      "clue": "Clothes"
+    },
+    {
+      "word": "ROCKET",
+      "clue": "Space"
+    },
+    {
+      "word": "PENCIL",
+      "clue": "School"
+    },
+    {
+      "word": "GARDEN",
+      "clue": "Place"
+    },
+    {
+      "word": "DRAGON",
+      "clue": "Fantasy"
+    },
+    {
+      "word": "COFFEE",
+      "clue": "Drink"
+    },
+    {
+      "word": "SOCCER",
+      "clue": "Sport"
+    },
+    {
+      "word": "TURTLE",
+      "clue": "Animal"
+    },
+    {
+      "word": "CAMERA",
+      "clue": "Tech"
+    },
+    {
+      "word": "ISLAND",
+      "clue": "Place"
+    },
+    {
+      "word": "SUMMER",
+      "clue": "Season"
+    },
+    {
+      "word": "CHEESE",
+      "clue": "Food"
+    },
+    {
+      "word": "PURPLE",
+      "clue": "Colour"
+    },
+    {
+      "word": "LONDON",
+      "clue": "City"
+    },
+    {
+      "word": "FRIEND",
+      "clue": "People"
+    },
+    {
+      "word": "BRIDGE",
+      "clue": "Place"
+    },
+    {
+      "word": "VIOLIN",
+      "clue": "Music"
+    },
+    {
+      "word": "ZEBRA",
+      "clue": "Animal"
+    },
+    {
+      "word": "CLOUD",
+      "clue": "Weather"
+    },
+    {
+      "word": "HONEY",
+      "clue": "Food"
+    },
+    {
+      "word": "MAGIC",
+      "clue": "Fantasy"
+    }
+  ],
+  "$lists": "spell + spellFirst: Spell It (from the app's WordBank, emoji dropped per DESIGN.md). mystery: Mystery Word. words: Today's five and Practice."
 }

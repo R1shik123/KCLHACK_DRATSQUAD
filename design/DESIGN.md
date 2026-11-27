@@ -41,7 +41,10 @@ Use roles, never raw hex. Names match `tokens.json` → `color.light` / `color.d
 | `danger` | #D70015 | #FF453A | Destructive actions only (Reset progress). **Never** for a wrong sign |
 
 Rules:
-- The accent appears **at most twice** on any screen (e.g. the primary button and the active tab).
+- The accent is the player's choice (Settings → Accent colour, `tokens.json` → `accents`: Blue, Indigo, Purple, Pink, Orange, Green, Graphite). Never hard-code blue.
+- `accentSoft` = the accent at 14% opacity. Use it for icon badges, tinted tiles and the current Echo slot.
+- Full accent fills are limited to: the primary button, the Home hero tile, the Home featured card (Today's five) and the lit Echo letter.
+- Appearance: System / Light / Dark (Settings). System follows the device.
 - No gradients, glows, coloured backgrounds or tinted cards. Ever.
 - A missed or wrong sign is **neutral**: the letter stays `ink`, nothing turns red. We don't punish learners.
 
@@ -94,6 +97,18 @@ Build these once per platform, with these names, so both codebases speak the sam
 | **Letter tile** | Square, `surface` fill, `sm` radius, letter in `title2` centred. Mastered: 6px `accent` dot top-right. Beta letters: `muted` letter |
 | **Stat** | Number in `title1` (or `display` on Results), label under it in `footnote`/`muted`. Stats sit in a row of 2 or 3, never a grid of cards |
 | **Timer** | `title2`, tabular, top-right of Play. Last 10 seconds turn `ink` → `accent`. No flashing |
+| **Icon badge** | 44 × 44, `sm` radius, `accentSoft` fill, 22px Lucide icon in `accent`. Used on game tiles and the game intro (56 × 56 there) |
+| **Hero tile** | Home only. 132 (phone 96, desktop 168) square, radius 32, `accent` fill, `accentInk` letter, soft accent glow. Cycles A→Z with the hold ring filling around it |
+| **Featured card** | Home only. Full-width, `lg` radius, `accent` fill, eyebrow "Today", title, body, round chevron. When played: `surface` fill + check |
+| **Game tile** | `surface`, `lg` radius, icon badge, title (`headline`), one-line description, best score top-right in `footnote`. 2 columns on phones, 3 on the website |
+| **Rules list** | Numbered list on the game intro: `surface` card, `accentSoft` number dots, hairline dividers |
+| **Target** | The big single letter (Sprint, Duel, Echo while showing): 168 square (desktop 200), radius 44, `surface`, letter 104px, hold ring around it. Echo lights it with `accent` |
+| **Stat chip** | Small `surface` tile, value in `title2`, label in `footnote`. Rows of 3 at the top of every game. The score chip uses `accent` text |
+| **Flash line** | One line under the game area for feedback ("That looks like Z", "Nice. B"). `muted`, or `success` when good. Clears after 1.6s |
+| **Echo slots** | 48 × 58 tiles: signed letters in `ink`, the current one `accentSoft` with an accent outline, the rest "?" |
+| **Mystery word** | One underlined box per letter, filled letters get an `accent` underline. Clue pill (`accentSoft`), 6 hearts, tried letters struck through |
+| **Duel score** | Two `surface` panels (Player 1 left, Player 2 right); the one that just scored gets `accentSoft`. A white divider splits the camera |
+| **Swatches** | Settings accent picker: 32px circles, selected one gets a 2px ring in its own colour |
 | **Toast** | `surfaceHigh`, `md` radius, `card` shadow, `subhead` text, bottom centre, 2.5s |
 | **Sheet / dialog** | `surfaceHigh`, `lg` top radius, `overlay` behind. Used for Pause and Reset confirmation |
 
@@ -128,4 +143,4 @@ Phones are the reference. The website is the same screens, centred in the conten
 **Parity check before merging a screen:** screenshot the website at 390 px wide and the app on a 390 pt phone, side by side. Same order, same text, same colours, same spacing ladder. If they differ, one of them is wrong.
 
 ## 10. Don't
-Purple/blue gradients · glassmorphism · coloured card borders or edge stripes · emoji · Inter/Roboto/system font as the display face · more than one primary button · red for wrong answers · confetti · fake stats or testimonials · retro/pixel styling (we've left that behind).
+Gradients (the hero glow is the only soft shadow) · glassmorphism · coloured card borders or edge stripes · emoji · Inter/Roboto/system font as the display face · more than one primary button · red for wrong answers · confetti · fake stats or testimonials · retro/pixel styling (we've left that behind).
