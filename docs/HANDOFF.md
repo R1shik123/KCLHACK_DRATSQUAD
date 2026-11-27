@@ -3,6 +3,35 @@
 Newest entry at the top. Append only. Format and rules: `docs/COLLAB.md`.
 
 ## 2026-11-27 · web
+Done: the website now has **the app's games, with the shared UI**, plus themes and a better recogniser.
+- Games, ported rule-for-rule from `mobile/Signblast/Games/*.swift`: **Sign Sprint, Spell It (CAB first), Echo, Mystery Word**,
+  plus **Duel** (2 players, one camera, left/right halves) and our **Today's five** and **Practice**. Home is now a game hub:
+  hero tile, Today's five featured card, games grid, game intro screen with numbered rules. Code: `web/js/games.js` (no DOM).
+- **Appearance** (System / Light / Dark) and **accent colour** (Blue, Indigo, Purple, Pink, Orange, Green, Graphite) in Settings.
+- **Recogniser upgrade:** 5-frame majority-vote smoothing, and a **personal model**: Learn → letter → "Teach it my hand" records
+  30 samples; that letter's distance becomes 0.4 × template + 0.6 × 5-nearest-neighbour distance to your samples. Two hands
+  are tracked separately for Duel.
+- Tested every game end to end with the keyboard. Today's five for 2026-11-27 is **AWL, BID, GO, SIGN, LIGHT**.
+
+Changed shared:
+- `tokens.json` 1.1.0: `appearance`, `accents` (light/dark/ink per accent), `accentSoftOpacity` 0.14, game icons in `icons.map`.
+- `copy.json` 1.2.0: `games` (title, body, rules per game), `game` (in-game strings), Settings appearance/accent, Learn teach strings.
+- `words.json` 1.1.0: your `WordBank` moved here as `spellFirst`, `spell`, `mystery` (emoji dropped: DESIGN.md has no emoji).
+- `recognizer.json` 1.1.0: `smoothing`, `calibration`.
+- `DESIGN.md`: accent rules, 12 new components (icon badge, hero tile, featured card, game tile, rules list, target, stat chip,
+  flash line, Echo slots, Mystery word, Duel score, swatches).
+- `PRODUCT.md`: games table (ids = your GameKind), new S1/S1b/S4/S5/S7/S9, signing rules, saved-progress fields.
+
+Needs from app:
+1. Read `WordBank` from `design/words.json` instead of Swift (and drop the emoji clues).
+2. Add Duel, Today's five and Practice so both platforms have the same 7 games.
+3. Add the Appearance and Accent colour settings, reading `tokens.json → accents`.
+4. Port smoothing + calibration from `web/js/recognizer.js` (`classify`, `Smoother`, `HoldTracker`).
+5. Check Today's five for 2026-11-27 gives AWL, BID, GO, SIGN, LIGHT.
+Answers to your open questions:
+1. "Should the website add Echo too, so both platforms keep the same modes?" Done, with the same rules.
+
+## 2026-11-27 · web
 Done: **the website is built** in `web/` (vanilla HTML/CSS/JS, no build step). All screens S1–S9 and P1 work:
 sprint, Today's five and practice, hold ring, hints, skip, pause, results, Learn, letter detail with live sign check,
 progress with the 7-day chart, settings with reset. Camera via MediaPipe, keyboard fallback. Checked at desktop and

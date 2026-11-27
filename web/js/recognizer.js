@@ -1,5 +1,8 @@
 // Hand-shape recogniser. MediaPipe finds 21 landmarks per hand; we turn them into 6 size-independent features and
-// pick the nearest letter template. Every number comes from design/recognizer.json so the app matches exactly.
+// pick the nearest letter. Two models work together (both on the device):
+//   1. Templates: hand-written ideal shapes per letter, with extra geometric rules (design/recognizer.json).
+//   2. Personal model: k-nearest-neighbours over the player's own recorded samples (calibration).
+// A majority vote over the last few frames smooths out flicker. Every number comes from design/recognizer.json.
 
 const TASKS = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 
@@ -38,21 +41,28 @@ function penalty(rule, f) {
   }
 }
 
-export function classify(lm, cfg) {
+/** samples: { letter: [[6 numbers], ...] } from the player's calibration (may be empty). */
+export function classify(lm, cfg, samples = {}) {
   const f = features(lm);
   const w = cfg.weights, wsum = w.reduce((x, y) => x + y, 0);
+  const wd = (a, b) => { let d = 0; for (let i = 0; i < 6; i++) d += w[i] * (a[i] - b[i]) ** 2; return Math.sqrt(d / wsum); };
+  const cal = cfg.calibration;
   const scores = Object.entries(cfg.templates).map(([L, t]) => {
-    let d = 0;
-    for (let i = 0; i < 6; i++) d += w[i] * (f.v[i] - t[i]) ** 2;
-    d = Math.sqrt(d / wsum);
+    let d = wd(f.v, t);
     for (const r of cfg.rules[L] || []) d += penalty(r, f);
+    const s = samples[L];
+    if (cal && s && s.length >= cal.k) {
+      const near = s.map((x) => wd(f.v, x)).sort((a, b) => a - b).slice(0, cal.k);
+      const knn = near.reduce((a, b) => a + b, 0) / near.length;
+      d = (1 - cal.blend) * d + cal.blend * knn;
+    }
     return [L, d];
   }).sort((a, b) => a[1] - b[1]);
   const [best, d1] = scores[0];
   const d2 = scores[1][1];
   const ok = d1 < cfg.accept && d2 - d1 > cfg.margin;
   const confidence = clamp(1 - d1 / cfg.accept) * clamp((d2 - d1) / (cfg.margin * 3), 0.4, 1);
-  return { letter: ok ? best : null, guess: best, confidence: ok ? confidence : 0, distance: d1 };
+  return { letter: ok ? best : null, guess: best, confidence: ok ? confidence : 0, distance: d1, vec: f.v };
 }
 
 let landmarkerPromise = null;
@@ -74,16 +84,33 @@ async function loadLandmarker(cfg) {
   return landmarkerPromise;
 }
 
+/** Majority vote over the last N frames, per tracked slot. */
+class Smoother {
+  constructor(window, minVotes) { this.n = window; this.min = minVotes; this.buf = []; }
+  push(letter) {
+    this.buf.push(letter); if (this.buf.length > this.n) this.buf.shift();
+    const votes = {};
+    for (const l of this.buf) if (l) votes[l] = (votes[l] || 0) + 1;
+    let best = null, bestN = 0;
+    for (const [l, n] of Object.entries(votes)) if (n > bestN) { best = l; bestN = n; }
+    return bestN >= this.min ? best : null;
+  }
+  clear() { this.buf = []; }
+}
+
 /** Owns the camera stream and the per-frame loop. One instance is shared by every screen. */
 export class Recognizer {
-  constructor(cfg) {
+  constructor(cfg, getSamples) {
     this.cfg = cfg;
+    this.getSamples = getSamples || (() => ({}));
     this.video = document.createElement("video");
     this.video.playsInline = true; this.video.muted = true; this.video.autoplay = true;
     this.state = "off"; // off | loading | on | denied | error
     this.listeners = new Set();
     this.canvas = null;
     this.lastTime = -1;
+    const s = cfg.smoothing || { window: 1, minVotes: 1 };
+    this.smooth = { main: new Smoother(s.window, s.minVotes), left: new Smoother(s.window, s.minVotes), right: new Smoother(s.window, s.minVotes) };
     this._loop = this._loop.bind(this);
   }
 
@@ -91,8 +118,7 @@ export class Recognizer {
 
   /** Attach the live video and landmark overlay to a camera frame element. */
   mount(frameEl) {
-    const old = frameEl.querySelector("video, canvas");
-    if (old) return;
+    if (frameEl.querySelector("video")) return;
     this.canvas = document.createElement("canvas");
     frameEl.prepend(this.canvas);
     frameEl.prepend(this.video);
@@ -125,6 +151,7 @@ export class Recognizer {
   stop() {
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null; this.video.srcObject = null;
+    Object.values(this.smooth).forEach((s) => s.clear());
     if (this.state === "on" || this.state === "loading") this.state = "off";
   }
 
@@ -135,21 +162,37 @@ export class Recognizer {
       this.lastTime = v.currentTime;
       let res = null;
       try { res = this.landmarker.detectForVideo(v, performance.now()); } catch { res = null; }
-      // Up to two hands: classify each and keep the most confident, so either hand works.
-      let lm = null, out = { letter: null, guess: null, confidence: 0, distance: Infinity };
-      for (const hand of res?.landmarks || []) {
-        const c = classify(hand, this.cfg);
-        const better = !lm || (c.letter && !out.letter) || (!!c.letter === !!out.letter && (c.letter ? c.confidence > out.confidence : c.distance < out.distance));
-        if (better) { lm = hand; out = c; }
+      const samples = this.getSamples();
+      const hands = (res?.landmarks || []).map((lm) => {
+        const c = classify(lm, this.cfg, samples);
+        // Screen side as the player sees it (the video is mirrored): wrist x < 0.5 in camera space = right of screen.
+        return { ...c, landmarks: lm, side: lm[0].x > 0.5 ? "left" : "right" };
+      });
+      // Main slot: the most confident hand, so either hand works.
+      let main = null;
+      for (const h of hands) {
+        if (!main || (h.letter && !main.letter) || (!!h.letter === !!main.letter && (h.letter ? h.confidence > main.confidence : h.distance < main.distance))) main = h;
       }
-      const frame = { ...out, landmarks: lm, hand: !!lm };
-      this._draw(frame);
+      const frame = {
+        hand: !!main,
+        letter: this.smooth.main.push(main?.letter || null),
+        raw: main?.letter || null,
+        confidence: main?.confidence || 0,
+        vec: main?.vec || null,
+        landmarks: main?.landmarks || null,
+        hands,
+        sides: {
+          left: this.smooth.left.push(hands.find((h) => h.side === "left")?.letter || null),
+          right: this.smooth.right.push(hands.find((h) => h.side === "right")?.letter || null),
+        },
+      };
+      this._draw(hands, frame.letter);
       this.listeners.forEach((f) => f(frame));
     }
     requestAnimationFrame(this._loop);
   }
 
-  _draw(frame) {
+  _draw(hands, mainLetter) {
     const c = this.canvas;
     if (!c || !c.isConnected) return;
     const w = c.clientWidth, h = c.clientHeight;
@@ -157,18 +200,35 @@ export class Recognizer {
     if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
     const g = c.getContext("2d");
     g.clearRect(0, 0, c.width, c.height);
-    if (!frame.landmarks) return;
-    // Match object-fit: cover on the video.
+    if (!hands.length) return;
     const vw = this.video.videoWidth || 4, vh = this.video.videoHeight || 3;
     const scale = Math.max(c.width / vw, c.height / vh);
     const ox = (c.width - vw * scale) / 2, oy = (c.height - vh * scale) / 2;
-    const css = getComputedStyle(document.documentElement);
-    g.fillStyle = frame.letter ? css.getPropertyValue("--color-accent").trim() || "#0071E3" : "rgba(255,255,255,0.9)";
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim() || "#0071E3";
     const r = 3.5 * dpr;
-    for (const p of frame.landmarks) {
-      g.beginPath();
-      g.arc(ox + (1 - p.x) * vw * scale, oy + p.y * vh * scale, r, 0, Math.PI * 2);
-      g.fill();
+    for (const hand of hands) {
+      g.fillStyle = hand.letter ? accent : "rgba(255,255,255,0.9)";
+      for (const p of hand.landmarks) {
+        g.beginPath();
+        g.arc(ox + (1 - p.x) * vw * scale, oy + p.y * vh * scale, r, 0, Math.PI * 2);
+        g.fill();
+      }
     }
   }
+}
+
+/** Turns frames into discrete signs: a letter counts after `stable` frames, and again every `rearm` frames while held. */
+export class HoldTracker {
+  constructor(stable, rearm) { this.stable = stable; this.rearm = rearm; this.reset(); }
+  /** Returns { letter, progress (0–1), fired (letter or null) } */
+  push(letter) {
+    if (letter && letter === this.letter) this.run++;
+    else if (letter) { this.letter = letter; this.run = 1; this.count = 0; }
+    else { this.run = Math.max(0, this.run - 2); if (!this.run) { this.letter = null; this.count = 0; } }
+    let fired = null;
+    if (this.letter && this.run >= this.stable + this.count * this.rearm) { fired = this.letter; this.count++; }
+    const progress = this.count ? 1 : Math.min(1, this.run / this.stable);
+    return { letter: this.letter, progress, fired };
+  }
+  reset() { this.letter = null; this.run = 0; this.count = 0; }
 }

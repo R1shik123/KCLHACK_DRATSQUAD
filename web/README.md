@@ -16,9 +16,10 @@ so the first camera start needs internet.
 |---|---|
 | `index.html` | Shell: top bar, view, toast and sheet hosts |
 | `css/app.css` | All styles, built only from `design/tokens.css` variables. Class names follow `DESIGN.md` §5 |
+| `css/games.css` | Game hub, game screens, theme pickers |
 | `js/main.js` | Router (`#play`, `#learn`, `#letter-A`, `#progress`, `#settings`, `#practice`, `#camera`, `#game`, `#results`) and screens S1–S9, P1 |
-| `js/engine.js` | Game rules: word picking, scoring, streak multiplier, Leitner updates, Today's five shuffle. No DOM |
-| `js/recognizer.js` | Camera + MediaPipe + letter classification from `design/recognizer.json` |
+| `js/games.js` | The 7 games (Sprint, Spell It, Echo, Mystery Word, Duel, Today's five, Practice), ported from the app. No DOM |
+| `js/recognizer.js` | Camera + MediaPipe + templates, smoothing and the personal (calibration) model from `design/recognizer.json` |
 | `js/store.js` | Saved progress in localStorage, shape from `docs/PRODUCT.md` |
 | `js/icons.js` | Lucide icons used by the UI |
 
