@@ -1,7 +1,6 @@
 # Putting Sign Max online (free)
 
-**Live now:** https://signmax.pages.dev (main address) and https://sign-max.pages.dev (same site). Cloudflare Pages, free,
-HTTPS so the camera works.
+**Live:** https://signmax.pages.dev (Cloudflare Pages, free, HTTPS so the camera works).
 
 ## Deploying an update (website side)
 From the repo root, on a machine signed in to Cloudflare (`npx wrangler login`, once):
@@ -10,14 +9,12 @@ From the repo root, on a machine signed in to Cloudflare (`npx wrangler login`, 
 node scripts/build-site.mjs
 cd dist
 npx wrangler@4 pages deploy . --project-name=signmax --branch=main --commit-dirty=true
-npx wrangler@4 pages deploy . --project-name=sign-max --branch=main --commit-dirty=true
 ```
-Deploy to both projects so the two addresses stay identical.
 `build-site.mjs` copies `web/` to `dist/`, copies the shared `design/*.json` and `tokens.css` into `dist/design/`, rewrites
 `../design/` to `design/`, and adds Cloudflare `_headers`. Run the deploy **from inside `dist/`**: at the repo root, newer
 Wrangler versions try to turn the project into a Worker and create a stray `wrangler.jsonc`.
 
-The Cloudflare projects `signmax` and `sign-max` already exist (each created once with `--force` to use classic Pages).
+The Cloudflare project `signmax` already exists (created once with `--force` to use classic Pages).
 Never pass `--force` again.
 
 ## Free custom domain (DigitalPlat FreeDomain)

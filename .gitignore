@@ -1,18 +1,13 @@
-# ===== Londonfax =====
+# ===== Sign Max =====
 # secrets — never commit
 .env
 .secrets/
 *.p8
 *.pem
-vendor/livelondon/.env
 
 # local environments and generated data
 .venv/
 node_modules/
-vendor/livelondon/node_modules/
-vendor/livelondon/.venv/
-vendor/livelondon/data/
-vendor/livelondon/.cache/
 __pycache__/
 *.pyc
 
