@@ -40,6 +40,12 @@ let practiceLetters = new Set(ALPHA);
 let sprintAll = false;
 
 document.getElementById("settings-btn").innerHTML = icon("settings");
+{
+  const f = document.querySelector(".site-foot");
+  f.querySelector(".t-footnote.muted").textContent = C.footer.tagline;
+  const links = f.querySelectorAll(".links a");
+  [C.footer.alphabet, C.tabs.progress, C.settings.title, C.footer.github].forEach((t, i) => { if (links[i]) links[i].textContent = t; });
+}
 
 // ---------- Theme (Settings → Appearance, Accent colour) ----------
 function applyTheme() {
@@ -116,40 +122,69 @@ function Home() {
   const days = store.streakDays();
   const daily = store.data.daily[todayKey()];
   const order = ["sprint", "spell", "echo", "mystery", "duel", "practice"];
-  view.innerHTML = `<section class="screen">
-    <div class="hero">
-      <div class="intro">
-        <p class="eyebrow">${esc(C.home.eyebrow)}</p>
-        <h1 class="t-large">${esc(C.home.title)}</h1>
+  const demoWord = C.home.demoWord;
+  view.innerHTML = `<section class="screen wide">
+    <div class="hero-wrap"><div class="hero">
+      <div class="lead">
+        <span class="chip-note"><span class="dot">${icon("camera")}</span>${esc(C.home.note)}</span>
+        <h1 class="t-hero">${esc(C.home.title)}<span class="soft">${esc(C.home.titleSoft)}</span></h1>
         <p class="t-body muted">${esc(C.home.body)}</p>
+        <div class="cta"><a class="btn primary" href="#game-sprint">${icon("zap")}${esc(C.home.primary)}</a><a class="btn secondary" href="#learn">${esc(C.home.ctaLearn)}</a></div>
       </div>
-      <div class="hero-tile" aria-hidden="true"><span class="glyph" id="glyph">A</span>${ringSvg()}</div>
+      <div class="demo" aria-hidden="true">
+        <div class="top"><span class="row" style="gap:10px"><span class="badge-icon" style="width:32px;height:32px;border-radius:10px">${icon("type")}</span><span class="t-headline">${esc(C.games.spell.title)}</span></span><span class="timer">1:24</span></div>
+        <div class="word" id="demo-word"></div>
+        <div class="cam" id="demo-cam">${handSkeleton()}<span class="status" id="demo-status"></span></div>
+        <div class="bars"><span><i></i></span><span><i></i></span><span><i></i></span></div>
+      </div>
+    </div></div>
+    <div class="facts">
+      <div class="fact"><span class="v">26</span><span class="k">${esc(C.home.factLetters)}</span></div>
+      <div class="fact"><span class="v">${Object.keys(GAMES).length}</span><span class="k">${esc(C.home.factGames)}</span></div>
+      <div class="fact"><span class="v">0 MB</span><span class="k">${esc(C.home.factUploads)}</span></div>
     </div>
     ${daily
-      ? `<div class="featured" aria-disabled="true"><span class="copy"><span class="eyebrow">${esc(C.home.featured)}</span><span class="t-title2">${esc(C.games.daily.title)}</span><span class="t-subhead muted">${fmt(C.home.dailyDone, { score: daily.score })}</span></span><span class="chev">${icon("check")}</span></div>`
-      : `<button class="featured" id="go-daily"><span class="copy"><span class="eyebrow">${esc(C.home.featured)}</span><span class="t-title2">${esc(C.games.daily.title)}</span><span class="t-subhead">${esc(C.games.daily.body)}</span></span><span class="chev">${icon("chevron-right")}</span></button>`}
-    <div class="stack-md">
-      <div class="section-head"><h2 class="t-title2">${esc(C.home.gamesTitle)}</h2><span class="t-footnote muted row" style="gap:6px">${icon("flame")} ${days ? fmt(C.home.streak, { n: days }) : esc(C.home.streakNone)}</span></div>
+      ? `<div class="featured" aria-disabled="true"><span class="ico">${icon("calendar")}</span><span class="copy"><span class="eyebrow">${esc(C.home.featured)}</span><span class="t-title2">${esc(C.games.daily.title)}</span><span class="t-subhead muted">${fmt(C.home.dailyDone, { score: daily.score })}</span></span><span class="chev">${icon("check")}</span></div>`
+      : `<button class="featured" id="go-daily"><span class="ico">${icon("calendar")}</span><span class="copy"><span class="eyebrow">${esc(C.home.featured)}</span><span class="t-title2">${esc(C.games.daily.title)}</span><span class="t-subhead">${esc(C.games.daily.body)}</span></span><span class="chev">${icon("chevron-right")}</span></button>`}
+    <div class="section">
+      <div class="section-head"><h2 class="t-title1">${esc(C.home.gamesTitle)}</h2><span class="t-footnote muted row" style="gap:6px">${icon("flame")} ${days ? fmt(C.home.streak, { n: days }) : esc(C.home.streakNone)}</span></div>
       <div class="games">${order.map((id) => `<a class="game-tile" href="#game-${id}">
         <span class="badge-icon">${icon(GAMES[id].icon)}</span>
-        ${GAMES[id].best && store.best(id) ? `<span class="best">${fmt(C.home.best, { score: store.best(id) })}</span>` : ""}
-        <span class="copy"><span class="t-headline">${esc(C.games[id].title)}</span><span class="t-subhead muted">${esc(C.games[id].body)}</span></span></a>`).join("")}</div>
+        <span class="copy"><span class="t-headline">${esc(C.games[id].title)}</span><span class="t-subhead muted">${esc(C.games[id].body)}</span></span>
+        <span class="foot"><span>${GAMES[id].best && store.best(id) ? fmt(C.home.best, { score: store.best(id) }) : ""}</span><span class="go">${icon("chevron-right")}</span></span></a>`).join("")}</div>
     </div>
   </section>`;
   $("#go-daily")?.addEventListener("click", () => startGame("daily"));
-  // Hero tile: cycle through the alphabet with the hold ring filling, like a sign being read.
-  const tile = $(".hero-tile"), glyph = $("#glyph");
-  let i = 0, p = 0;
+
+  // Live demo: spells the demo word letter by letter, ring filling on each, like a real round.
+  const wordEl = $("#demo-word"), st = $("#demo-status"), bars = [...view.querySelectorAll(".demo .bars i")];
+  let idx = 0, p = 0, words = 0;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const draw = () => {
+    wordEl.innerHTML = [...demoWord].map((ch, i) => i < idx ? `<span class="ch done">${ch}</span>` : i === idx ? `<span class="ch cur">${ch}${ringSvg()}</span>` : `<span class="ch next">${ch}</span>`).join("");
+    st.innerHTML = idx < demoWord.length ? `<span class="sig">${demoWord[idx]}${ringSvg()}</span>${esc(C.camera.holding)}` : esc(C.play.wordDone);
+  };
+  draw();
+  if (reduce) { setRing(wordEl.querySelector(".cur"), 0.6); return; }
   const t = setInterval(() => {
-    if (reduce) return;
-    p += 0.125;
-    if (p <= 1) { setRing(tile, p, p >= 1); return; }
-    glyph.classList.add("swap");
-    setTimeout(() => { i = (i + 1) % 26; glyph.textContent = ALPHA[i]; glyph.classList.remove("swap"); p = 0; setRing(tile, 0); }, 250);
-    p = -1;
-  }, 160);
+    p += 0.1;
+    const cur = wordEl.querySelector(".cur");
+    if (p < 1) { setRing(cur, p); setRing(st.querySelector(".sig"), p); return; }
+    if (cur) setRing(cur, 1, true);
+    if (p < 1.4) return;
+    p = 0; idx++;
+    if (idx > demoWord.length) { idx = 0; words = (words + 1) % 4; bars.forEach((b, i) => { b.style.width = i < words ? "100%" : "0%"; }); }
+    draw();
+  }, 70);
   onLeave(() => clearInterval(t));
+}
+
+// A static hand-landmark sketch for the demo camera (21 points joined like MediaPipe draws them).
+function handSkeleton() {
+  const pts = [[50, 86], [41, 78], [35, 68], [32, 58], [30, 50], [44, 52], [43, 38], [43, 29], [43, 21], [52, 50], [53, 35], [53, 25], [53, 16], [60, 52], [62, 40], [62, 32], [62, 25], [67, 56], [70, 47], [71, 41], [72, 35]];
+  const bones = [[0, 1, 2, 3, 4], [0, 5, 6, 7, 8], [5, 9, 10, 11, 12], [9, 13, 14, 15, 16], [13, 17, 18, 19, 20], [0, 17]];
+  const path = bones.map((b) => "M" + b.map((i) => pts[i].join(" ")).join(" L")).join(" ");
+  return `<svg class="hand-skel" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><path d="${path}"/>${pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.6"/>`).join("")}</svg>`;
 }
 
 // ---------- Game intro (ready card) ----------
@@ -244,13 +279,15 @@ function Run(id) {
 
   view.innerHTML = `<section class="screen narrow">
     <div class="play-bar">
-      <span class="eyebrow">${esc(gameTitle(id))}</span>
+      <span class="title"><span class="badge-icon">${icon(GAMES[id].icon)}</span><span class="t-headline">${esc(gameTitle(id))}</span></span>
       <div class="right">${timed ? `<span class="timer" id="timer">${mmss(game.timeLeft)}</span>` : ""}<button class="icon-btn" id="pause" aria-label="${esc(C.play.pause)}">${icon("pause")}</button></div>
     </div>
+    <div class="stage">
     <div id="body" class="stack-md"></div>
     <p class="flash" id="flash" aria-live="polite"></p>
     <div class="cam" id="cam"><div class="placeholder" id="ph"></div>${id === "duel" ? `<span class="divider"></span><span class="side-tag l">${esc(G.duelP1)}</span><span class="side-tag r">${esc(G.duelP2)}</span>` : ""}<span class="status" id="status" hidden></span></div>
     <div class="play-foot" id="foot"></div>
+    </div>
     <div class="hint-card" id="hint-card" hidden></div>
   </section>`;
   const body = $("#body"), foot = $("#foot"), status = $("#status"), ph = $("#ph"), hintCard = $("#hint-card");
@@ -417,7 +454,7 @@ function Results() {
   const title = id === "duel" ? (r.winner ? tx(G.duelWins, { player: r.winner === "left" ? G.duelP1 : G.duelP2 }) : G.duelDraw) : isDaily ? C.results.dailyTitle : null;
   view.innerHTML = `<section class="screen narrow">
     <div class="intro"><p class="eyebrow">${esc(gameTitle(id))}</p>${title ? `<h1 class="t-title1">${esc(title)}</h1>` : ""}</div>
-    ${id === "duel" ? "" : `<div class="stack"><span class="score-big">${r.score}</span><span class="t-footnote muted">${esc(id === "echo" ? G.echoLength : C.results.score)}</span>${r.newBest ? `<span class="badge">${icon("trophy")}${esc(C.results.best)}</span>` : ""}</div>`}
+    ${id === "duel" ? "" : `<div class="score-card"><span class="eyebrow">${esc(id === "echo" ? G.echoLength : C.results.score)}</span><span class="score-big">${r.score}</span>${r.newBest ? `<span class="badge">${icon("trophy")}${esc(C.results.best)}</span>` : ""}</div>`}
     <div class="stats">${r.stats.map(([k, v]) => stat(val(k, v), LABEL[k] || k)).join("")}</div>
     ${(r.lines || []).length ? `<div class="card">${r.lines.map((l) => `<p class="t-callout">${esc(l)}</p>`).join("")}</div>` : ""}
     ${id === "duel" || id === "mystery" ? "" : `<div class="section"><p class="eyebrow">${esc(C.results.hardest)}</p>
@@ -521,7 +558,7 @@ function Progress() {
   view.innerHTML = `<section class="screen">
     <div class="intro"><p class="eyebrow">${esc(C.progress.eyebrow)}</p><h1 class="t-large">${esc(C.progress.title)}</h1></div>
     <div class="stats">${stat(store.streakDays(), C.progress.streak)}${stat(`${store.mastered()}<span class="muted">/26</span>`, C.progress.mastered)}${stat(store.best("sprint"), C.progress.bestSprint)}</div>
-    <div class="section">
+    <div class="week-card">
       <p class="eyebrow">${esc(C.progress.week)}</p>
       ${d.history.length ? "" : `<p class="t-callout muted">${esc(C.progress.empty)}</p>`}
       <div class="week">${days.map((dt, i) => `<div class="day${i === 6 ? " today" : ""}" title="${totals[i]}"><div class="bar-wrap"><div class="bar${totals[i] ? " has" : ""}" style="height:${Math.max(4, Math.round((totals[i] / max) * 100))}%"></div></div><span class="lbl">${esc(label(dt))}</span></div>`).join("")}</div>

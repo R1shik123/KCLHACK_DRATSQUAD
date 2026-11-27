@@ -28,6 +28,26 @@ Open questions:
 1. Should Practice get hearts like Echo? (proposal: no, keep it penalty-free)
 
 ## 2026-11-27 · web
+Done: **visual redesign (tokens 2.0)** and **free hosting**.
+- The human said the UI looked basic and AI-generated. v2: grey canvas with white cards in layered custom shadows, bigger radii,
+  tighter headline type, pill nav with a raised active tab, a product-page Home (hero with a live SIGN demo, fact strip, featured
+  Today's five, games grid, footer), and every game in a raised stage card. Light and dark both checked, phone and desktop.
+- Hosting: `.github/workflows/pages.yml` deploys `web/` + `design/` to GitHub Pages on push. A free domain from DigitalPlat
+  FreeDomain points at it. Steps in `docs/DEPLOY.md` (repo admin must set Settings → Pages → Source: GitHub Actions).
+
+Changed shared:
+- `tokens.json` **2.0.0 (major)**: light `bg` is now #F5F5F7 and `surface` is white (cards); new `fill` role for insets;
+  `muted` #6E6E73 / #8E8E93; `hairline` lighter; `shadow` is now `light`/`dark` × `sm`/`md`/`lg` (layered strings);
+  new `hero` type style; radii 14/20/28; button height 48.
+- `copy.json` 1.3.0: hero, facts and footer strings.
+- `DESIGN.md`: new section 1b "v2 look" + Stage, Demo card, Fact, Score card, Site footer components.
+
+Needs from app:
+1. Move to tokens 2.0: grey canvas, white cards, `fill` for insets, the three shadow levels (SwiftUI: layer `.shadow` modifiers
+   to match the light strings; in dark use a 1px white 6–9% stroke instead).
+2. Rebuild Home to match section 1b (hero, demo, facts, featured, games grid) and put games in a stage card.
+
+## 2026-11-27 · web
 Done: the website now has **the app's games, with the shared UI**, plus themes and a better recogniser.
 - Games, ported rule-for-rule from `mobile/Signblast/Games/*.swift`: **Sign Sprint, Spell It (CAB first), Echo, Mystery Word**,
   plus **Duel** (2 players, one camera, left/right halves) and our **Today's five** and **Practice**. Home is now a game hub:
