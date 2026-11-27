@@ -5,7 +5,7 @@
 > **Start here (Nov 2026 rebuild).** Signblast is being rebuilt as a clean, non-retro ASL fingerspelling game, with a
 > **website** (`web/`) and an **app** (`mobile/`) built in parallel by two Claude sessions that share one UI.
 > Read `docs/COLLAB.md` first, then `docs/HANDOFF.md`, `design/DESIGN.md` and `docs/PRODUCT.md`.
-> **Live site:** https://sign-max.pages.dev (Cloudflare Pages). Deploy and free-domain steps: `docs/DEPLOY.md`.
+> **Live site:** https://signmax.pages.dev (Cloudflare Pages; also at sign-max.pages.dev). Deploy and free-domain steps: `docs/DEPLOY.md`.
 > Everything below this box describes the hackathon version (legacy code, don't build on it).
 
 **Learn the ASL alphabet by playing an arcade classic.** Letters fall like an arcade wave; make each letter's
