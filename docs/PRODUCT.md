@@ -56,17 +56,22 @@ Use these IDs in code, file names and commit messages (e.g. `web: S4 hold ring`)
 - Streak: every 3 words in a row without a skip or hint adds **×1** to the multiplier (max ×3). A skip or hint resets it.
 - Accuracy = accepted letters ÷ (accepted + skipped).
 
-**Word list**
-Start with short common words, weighted towards letters the player finds hardest (spaced repetition, as in the hackathon
-version's Leitner boxes). Letters still marked beta by the recogniser (see below) appear less often until they're reliable.
+**Word list** (`design/words.json`)
+- Sprint and Practice pick words weighted towards the letters you find hardest: a word's weight is its weakest letter's
+  Leitner weight (box 1 → 3, box 2 → 2, box 3 → 1.4, box 4–5 → 1), × 0.4 for beta letters. The last 6 words aren't repeated.
+- Practice only uses words made entirely of the picked letters. If fewer than 3 fit, it practises the single letters.
+- Today's five uses the exact seeded shuffle described in `words.json` (FNV-1a + mulberry32), so everyone gets the same words.
+- Leitner updates: a letter signed in under 3 s without a hint moves up one box; a hinted or skipped letter goes back to box 1.
 
 ## Recogniser parity
 The website and the app must accept the **same handshapes with the same thresholds**, or scores won't match.
-- The current recogniser lives in `app/recognizer.js` (hackathon code): MediaPipe hand landmarks → 6 features → nearest
-  letter template, accepted when the distance is under 0.30 and beats the runner-up by 0.05, held 8 frames.
-- **To do (website side):** move the templates and thresholds into `design/recognizer.json` so both platforms load the
-  same numbers. Until then, the app copies the values from `app/recognizer.js`.
-- Reliable letters: A B C D F I L U V W Y. The rest are beta (shown `muted` in Learn).
+- Everything lives in `design/recognizer.json`: the model, 26 templates, the extra rules, weights, `accept` 0.30,
+  `margin` 0.05 and `stableFrames` 8. The feature formulas are written out in its `features.notes`.
+- Reference implementation: `web/js/recognizer.js` (`features()`, `classify()`, rule `penalty()`).
+- Hold logic on S4: a frame counts when the recognised letter equals the target; otherwise the counter drops by 2
+  (forgiving flicker). Accept at 8. No hand in view resets it to 0.
+- Reliable letters (`solid`): A B C D F I L U V W Y. The rest are beta (shown `muted` in Learn).
+- With no camera, keyboard mode accepts the target letter's key instantly.
 
 ## Saved progress
 Stored on the device only (localStorage on the website, AsyncStorage or equivalent in the app), **same shape on both**:
@@ -75,7 +80,8 @@ Stored on the device only (localStorage on the website, AsyncStorage or equivale
 {
   "version": 1,
   "hand": "right",
-  "sound": true,
+  "sound": false,
+  "input": "camera",
   "boxes": { "A": 3, "B": 1 },
   "streak": { "days": 4, "lastPlayed": "2026-11-27" },
   "best": { "sprint": 340 },
@@ -84,6 +90,8 @@ Stored on the device only (localStorage on the website, AsyncStorage or equivale
 }
 ```
 `boxes` are Leitner boxes 1–5 per letter (1 = needs work, 5 = mastered). "Letters mastered" counts letters in box 5.
+`input` is `"camera"`, `"keyboard"` or `null` (not chosen yet, so S2 is shown before the first game).
+The streak counts consecutive days with at least one finished game; it shows 0 if the last game was before yesterday.
 
 ## Not in scope (for now)
 Accounts, cloud sync, leaderboards, Snowflake or any backend, two-handed signs, BSL, motion letters J and Z as real motion.

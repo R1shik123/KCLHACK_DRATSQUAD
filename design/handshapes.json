@@ -1,0 +1,32 @@
+{
+  "$schema": "How to make each ASL letter, in plain English. Shown on Letter detail (S7) and as the hint on Play (S4). Same text on both platforms.",
+  "version": "1.0.0",
+  "letters": {
+    "A": { "short": "Fist, thumb at the side", "how": "Make a fist with your thumb resting against the side of your index finger." },
+    "B": { "short": "Flat hand, thumb in", "how": "Hold four fingers straight up together and fold your thumb across your palm." },
+    "C": { "short": "Curve into a C", "how": "Curve your fingers and thumb as if holding a small cup, leaving a gap." },
+    "D": { "short": "Index up, others touch thumb", "how": "Point your index finger up. Touch the tips of your other fingers to your thumb." },
+    "E": { "short": "Fingers curl onto thumb", "how": "Curl your fingertips down to rest on your thumb, tucked across your palm." },
+    "F": { "short": "OK sign, three fingers up", "how": "Touch your index fingertip to your thumb. Keep the other three fingers up and apart." },
+    "G": { "short": "Index points sideways", "how": "Point your index finger and thumb sideways, parallel, with the other fingers folded." },
+    "H": { "short": "Two fingers sideways", "how": "Hold your index and middle fingers together, pointing sideways." },
+    "I": { "short": "Fist, little finger up", "how": "Make a fist and raise your little finger straight up." },
+    "J": { "short": "I, then draw a J", "how": "Make an I and draw a J in the air with your little finger." },
+    "K": { "short": "V with thumb between", "how": "Raise your index and middle fingers in a V and put your thumb between them." },
+    "L": { "short": "Thumb and index make an L", "how": "Point your index finger up and your thumb out to the side." },
+    "M": { "short": "Thumb under three fingers", "how": "Fold three fingers over your thumb, which sits under them." },
+    "N": { "short": "Thumb under two fingers", "how": "Fold two fingers over your thumb, which sits under them." },
+    "O": { "short": "Fingertips make an O", "how": "Curve all your fingers to meet your thumb in a round O." },
+    "P": { "short": "K pointing down", "how": "Make a K, then tilt your hand so your fingers point down." },
+    "Q": { "short": "G pointing down", "how": "Make a G, then tilt your hand so your index and thumb point down." },
+    "R": { "short": "Cross two fingers", "how": "Cross your middle finger over your index finger, both pointing up." },
+    "S": { "short": "Fist, thumb across", "how": "Make a fist with your thumb wrapped across the front of your fingers." },
+    "T": { "short": "Thumb under index", "how": "Make a fist with your thumb tucked between your index and middle fingers." },
+    "U": { "short": "Two fingers together", "how": "Hold your index and middle fingers straight up, touching." },
+    "V": { "short": "Two fingers spread", "how": "Hold your index and middle fingers up in a V." },
+    "W": { "short": "Three fingers spread", "how": "Hold your index, middle and ring fingers up and apart. Thumb holds the little finger." },
+    "X": { "short": "Hook the index", "how": "Make a fist and raise your index finger, bent into a hook." },
+    "Y": { "short": "Thumb and little finger out", "how": "Make a fist, then stretch your thumb and little finger out." },
+    "Z": { "short": "Index draws a Z", "how": "Point your index finger and draw a Z in the air." }
+  }
+}

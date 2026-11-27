@@ -9,7 +9,11 @@ If something you want to build isn't covered here, add it here first (see `docs/
 | `design/tokens.json` | Colours (light + dark), font, type scale, spacing, radius, shadow, sizes, motion, icon names |
 | `design/tokens.css` | The same tokens as CSS variables for the website. Generated: `node design/build-tokens.mjs` |
 | `design/copy.json` | Every UI string. Both sides use the same words |
+| `design/recognizer.json` | Hand-shape templates, rules and thresholds. Both platforms accept exactly the same signs |
+| `design/handshapes.json` | How to make each letter (short + long text), used on S7 and in hints |
+| `design/words.json` | The word list and the exact Today's five algorithm |
 | `design/preview.html` | How each component should look, rendered from the tokens. Open it in a browser and match it |
+| `web/` | **The reference build.** When the docs leave something open, match what the website does |
 | `docs/PRODUCT.md` | Screens, navigation, the game rules and states |
 
 ## 1. Direction
@@ -58,7 +62,7 @@ Every changing number (timer, score, counts) uses tabular figures.
 | `footnote` | 13 / 18 | 400 | Captions, stat labels (in `muted`) |
 | `eyebrow` | 12 / 16, +0.06em, UPPERCASE | 600 | The small label above every headline (in `muted`) |
 
-On the website, `display` may scale up to 96px on screens wider than 900px. Nothing else scales.
+On the website, `display` scales to 88px (Play word) and 96px (Results score) on screens wider than 900px. Nothing else scales.
 
 ## 4. Space, radius, shadow
 - **Spacing ladder:** 4 · 8 · 16 · 24 · 40 · 64 · 96 · 160. Use nothing in between.
@@ -76,6 +80,7 @@ Build these once per platform, with these names, so both codebases speak the sam
 |---|---|
 | **Button / primary** | Height 50, `pill` radius, `accent` fill, `accentInk` label in `headline`. Full width on phones, auto width (min 200) on the website. One per screen |
 | **Button / secondary** | Same shape, `surface` fill, `ink` label |
+| **Button / destructive** | Same shape as secondary, `danger` label. Only for the Reset progress confirmation |
 | **Button / text** | No fill, `accent` label in `headline`. For "Show hint", "Skip", "Use keyboard instead" |
 | **Button / icon** | 44 × 44 hit area, 22px Lucide icon, stroke 1.75, `ink` |
 | **Card** | `surface` fill, `md` radius, 24 padding, no border, no shadow. Title in `title2`, text in `callout`/`muted` |
@@ -96,7 +101,8 @@ Build these once per platform, with these names, so both codebases speak the sam
 - Easing `cubic-bezier(0.16, 1, 0.3, 1)` everywhere. Durations: 200 (presses, hovers) · 350 (screen elements, rings) · 600 (screen transitions).
 - Letter accepted: hold ring completes → turns green → letter settles to `ink` (350). Word done: whole word fades up 8px and out, next word fades in (350).
 - No bounces, no confetti, no shaking. Reduced motion: fades only.
-- **App:** light haptic on letter accepted, medium on word done. **Website:** no sound by default.
+- **App:** light haptic on letter accepted, medium on word done. **Sound is off by default on both**; Settings → Sound turns on a soft tick per letter and a two-note chime per word.
+- Screens never fade in from invisible. Entrance is an 8-unit slide only, so a screen is readable even if the animation doesn't run.
 
 ## 7. Icons and imagery
 - **Lucide** only, stroke 1.75, size 22. The exact icon names are in `tokens.json` → `icons.map`.
@@ -114,6 +120,7 @@ Phones are the reference. The website is the same screens, centred in the conten
 | | App (phone, 390 wide) | Website (desktop) |
 |---|---|---|
 | Navigation | Bottom tab bar | Top bar: app name left, tabs centre, settings icon right |
+| Tabs during a game | Hidden on S2, S4 and S5 | Same: the tab links hide, the app name and settings stay |
 | Play | Word on top, camera below | Same order, same column (max 560). Camera does not go side by side |
 | Learn grid | 4 columns | 6 columns (max 680) |
 | Results stats | Row of 3 | Row of 3 |
