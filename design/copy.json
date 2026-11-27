@@ -55,7 +55,7 @@
   },
   "camera": {
     "title": "Turn on your camera",
-    "body": "Signblast reads your hand shape on this device. Video never leaves it.",
+    "body": "Sign Max reads your hand shape on this device. Video never leaves it.",
     "primary": "Allow camera",
     "denied": "Camera is blocked. Allow it in your settings, or practise with the keyboard.",
     "unavailable": "The camera couldn't start. Check it isn't in use by another app, or use the keyboard.",
@@ -115,7 +115,7 @@
     "beta": "Still learning to read this one",
     "practise": "Practise this letter",
     "teach": "Teach it my hand",
-    "teachBody": "Hold the sign steady while Signblast records {n} samples. It learns your hand and reads this letter more reliably.",
+    "teachBody": "Hold the sign steady while Sign Max records {n} samples. It learns your hand and reads this letter more reliably.",
     "teaching": "Recording {done} of {n}",
     "taught": "Learned your {letter}",
     "forget": "Forget my samples",

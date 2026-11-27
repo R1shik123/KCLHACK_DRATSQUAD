@@ -501,8 +501,7 @@ function Results() {
 function Learn() {
   view.innerHTML = `<section class="screen">
     <div class="intro"><p class="eyebrow">${esc(C.learn.eyebrow)}</p><h1 class="t-large">${esc(C.learn.title)}</h1><p class="t-body muted">${esc(C.learn.body)}</p></div>
-    <div class="tiles pics">${ALPHA.map((L) => `<a class="${tileClass(L)} pic" href="#letter-${L}" aria-label="${L}${SOLID.has(L) ? "" : ", " + esc(C.learn.beta)}">${handImg(L)}<span class="tl">${L}</span></a>`).join("")}</div>
-    <p class="t-footnote muted">${esc(C.learn.credit)}</p>
+    <div class="tiles">${ALPHA.map((L) => `<a class="${tileClass(L)}" href="#letter-${L}" aria-label="${L}${SOLID.has(L) ? "" : ", " + esc(C.learn.beta)}">${L}</a>`).join("")}</div>
   </section>`;
 }
 
