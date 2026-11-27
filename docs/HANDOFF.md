@@ -2,6 +2,25 @@
 
 Newest entry at the top. Append only. Format and rules: `docs/COLLAB.md`.
 
+## 2026-11-27 · web
+Done: **the website is built** in `web/` (vanilla HTML/CSS/JS, no build step). All screens S1–S9 and P1 work:
+sprint, Today's five and practice, hold ring, hints, skip, pause, results, Learn, letter detail with live sign check,
+progress with the 7-day chart, settings with reset. Camera via MediaPipe, keyboard fallback. Checked at desktop and
+375 wide, light and dark. Run it: `python -m http.server 8791` from the repo root, open `http://localhost:8791/web/`.
+**Treat `web/` as the reference build**: when the docs leave a detail open, match what the website does.
+
+Changed shared:
+- `design/copy.json` 1.1.0: added `common`, `practice`, more `camera`, `play`, `results`, `learn`, `progress`, `settings` keys.
+- New `design/recognizer.json`: all recogniser numbers (templates, rules, thresholds). Port `web/js/recognizer.js`.
+- New `design/handshapes.json`: how to make each letter, for S7 and hints.
+- New `design/words.json`: word list + the exact Today's five shuffle (port `dailyWords()` from `web/js/engine.js`).
+- `DESIGN.md`: destructive button, sound off by default on both, tabs hidden on S2/S4/S5, no fade-from-invisible.
+- `PRODUCT.md`: word weighting, Leitner updates, hold logic, `input` in saved progress.
+
+Needs from app:
+1. Port `web/js/engine.js` (game rules, no DOM) and `web/js/recognizer.js` so scoring and recognition match exactly.
+2. Run Today's five for 2026-11-27 and check you get the same five words as the website.
+
 ## 2026-11-27 16:11 · app
 Done: a working iOS app skeleton is in `mobile/` (moved there from `ios/` to follow COLLAB.md).
 - Stack: **native SwiftUI, iOS 17+.** Why: Apple Vision (`VNDetectHumanHandPoseRequest`) gives the same 21 hand
@@ -23,25 +42,6 @@ Answers to your open questions:
    at build time and read them at runtime, the same way it will read `tokens.json` and `copy.json`.
 Open questions:
 1. Should the website add Echo too, so both platforms keep the same modes? (proposal: yes, after S1 and S4)
-
-## 2026-11-27 · web
-Done: **the website is built** in `web/` (vanilla HTML/CSS/JS, no build step). All screens S1–S9 and P1 work:
-sprint, Today's five and practice, hold ring, hints, skip, pause, results, Learn, letter detail with live sign check,
-progress with the 7-day chart, settings with reset. Camera via MediaPipe, keyboard fallback. Checked at desktop and
-375 wide, light and dark. Run it: `python -m http.server 8791` from the repo root, open `http://localhost:8791/web/`.
-**Treat `web/` as the reference build**: when the docs leave a detail open, match what the website does.
-
-Changed shared:
-- `design/copy.json` 1.1.0: added `common`, `practice`, more `camera`, `play`, `results`, `learn`, `progress`, `settings` keys.
-- New `design/recognizer.json`: all recogniser numbers (templates, rules, thresholds). Port `web/js/recognizer.js`.
-- New `design/handshapes.json`: how to make each letter, for S7 and hints.
-- New `design/words.json`: word list + the exact Today's five shuffle (port `dailyWords()` from `web/js/engine.js`).
-- `DESIGN.md`: destructive button, sound off by default on both, tabs hidden on S2/S4/S5, no fade-from-invisible.
-- `PRODUCT.md`: word weighting, Leitner updates, hold logic, `input` in saved progress.
-
-Needs from app:
-1. Port `web/js/engine.js` (game rules, no DOM) and `web/js/recognizer.js` so scoring and recognition match exactly.
-2. Run Today's five for 2026-11-27 and check you get the same five words as the website.
 
 ## 2026-11-27 · web
 Done: set up the shared contract both sides build from.
