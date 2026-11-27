@@ -205,13 +205,23 @@ export class Recognizer {
     const scale = Math.max(c.width / vw, c.height / vh);
     const ox = (c.width - vw * scale) / 2, oy = (c.height - vh * scale) / 2;
     const accent = getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim() || "#0071E3";
-    const r = 3.5 * dpr;
+    const r = 5.5 * dpr;
+    const BONES = [[0, 1, 2, 3, 4], [0, 5, 6, 7, 8], [5, 9, 10, 11, 12], [9, 13, 14, 15, 16], [13, 17, 18, 19, 20], [0, 17]];
     for (const hand of hands) {
-      g.fillStyle = hand.letter ? accent : "rgba(255,255,255,0.9)";
+      const pt = (p) => [ox + (1 - p.x) * vw * scale, oy + p.y * vh * scale];
+      const col = hand.letter ? accent : "#ffffff";
+      // bones: thick, so the hand shape reads at a glance
+      g.lineCap = "round"; g.lineJoin = "round";
+      g.strokeStyle = "rgba(0,0,0,0.35)"; g.lineWidth = 7 * dpr;
+      for (const b of BONES) { g.beginPath(); b.forEach((i, k) => { const [x, y] = pt(hand.landmarks[i]); k ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); }
+      g.strokeStyle = col; g.lineWidth = 3.5 * dpr;
+      for (const b of BONES) { g.beginPath(); b.forEach((i, k) => { const [x, y] = pt(hand.landmarks[i]); k ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); }
+      // joints: filled dots with a white ring and a soft shadow
       for (const p of hand.landmarks) {
-        g.beginPath();
-        g.arc(ox + (1 - p.x) * vw * scale, oy + p.y * vh * scale, r, 0, Math.PI * 2);
-        g.fill();
+        const [x, y] = pt(p);
+        g.beginPath(); g.arc(x, y, r + 2 * dpr, 0, Math.PI * 2); g.fillStyle = "rgba(0,0,0,0.3)"; g.fill();
+        g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = "#ffffff"; g.fill();
+        g.beginPath(); g.arc(x, y, r - 1.8 * dpr, 0, Math.PI * 2); g.fillStyle = col === "#ffffff" ? "#9aa0a6" : col; g.fill();
       }
     }
   }
