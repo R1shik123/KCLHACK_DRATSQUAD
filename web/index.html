@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Signblast</title>
+  <title>Sign Max</title>
   <meta name="description" content="Learn ASL fingerspelling by spelling real words with your hand.">
   <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -12,12 +12,15 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="../design/tokens.css">
   <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/motion.css">
 </head>
 <body>
   <a class="skip-link" href="#view">Skip to content</a>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+  <div class="grain" aria-hidden="true"></div>
   <header class="topbar" id="topbar">
     <div class="topbar-inner">
-      <a class="brand" href="#play" id="brand" aria-label="Signblast home"><span class="brand-mark" aria-hidden="true">S</span><span class="brand-name">Signblast</span></a>
+      <a class="brand" href="#play" id="brand" aria-label="Sign Max home"><span class="brand-mark" aria-hidden="true">SM</span><span class="brand-name">Sign Max</span></a>
       <nav class="tabs" aria-label="Main">
         <a href="#play" data-tab="play" id="tab-play">Play</a>
         <a href="#learn" data-tab="learn" id="tab-learn">Learn</a>
@@ -30,7 +33,7 @@
   <footer class="site-foot">
     <div class="inner">
       <div class="stack" style="gap:2px">
-        <span class="brand"><span class="brand-mark" aria-hidden="true">S</span>Signblast</span>
+        <span class="brand"><span class="brand-mark" aria-hidden="true">SM</span>Sign Max</span>
         <span class="t-footnote muted">Learn ASL fingerspelling by playing. Hand tracking runs on your device.</span>
       </div>
       <nav class="links t-footnote" aria-label="Footer">
@@ -41,7 +44,7 @@
   </footer>
   <div class="toast-host" id="toasts" aria-live="polite"></div>
   <div class="sheet-host" id="sheet" hidden></div>
-  <noscript><p class="noscript">Signblast needs JavaScript to run.</p></noscript>
+  <noscript><p class="noscript">Sign Max needs JavaScript to run.</p></noscript>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

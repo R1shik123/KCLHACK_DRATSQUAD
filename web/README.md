@@ -1,6 +1,6 @@
-# Signblast website
+# Sign Max website
 
-The reference build of Signblast. The app in `mobile/` matches this UI (see `docs/COLLAB.md`).
+The reference build of Sign Max. The app in `mobile/` matches this UI (see `docs/COLLAB.md`).
 
 ## Run it
 No build step and no dependencies. Serve the **repo root** (the site loads `../design/*.json` and `../design/tokens.css`):

@@ -1,4 +1,4 @@
-// Signblast website: router + screens (docs/PRODUCT.md). Vanilla JS, no build step.
+// Sign Max website: router + screens (docs/PRODUCT.md). Vanilla JS, no build step.
 import { Recognizer, HoldTracker } from "./recognizer.js";
 import { Sprint, Spell, Echo, Mystery, Duel, dailyWords } from "./games.js";
 import { store, todayKey } from "./store.js";
@@ -108,6 +108,7 @@ const tileClass = (L) => `tile${SOLID.has(L) ? "" : " beta"}${store.box(L) >= 5 
 const stat = (n, l) => `<div class="stat"><span class="n">${n}</span><span class="l">${esc(l)}</span></div>`;
 const chip = (id, v, k, cls = "") => `<div class="chip ${cls}"><span class="v" id="${id}">${v}</span><span class="k">${esc(k)}</span></div>`;
 const gameTitle = (id) => C.games[id].title;
+const gameAttr = (id) => `data-game="${id}" style="--ga:var(--game-${id}-a);--gb:var(--game-${id}-b)"`;
 const mmss = (ms) => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
 function startGame(id, opts = {}) {
@@ -127,29 +128,30 @@ function Home() {
     <div class="hero-wrap"><div class="hero">
       <div class="lead">
         <span class="chip-note"><span class="dot">${icon("camera")}</span>${esc(C.home.note)}</span>
-        <h1 class="t-hero">${esc(C.home.title)}<span class="soft">${esc(C.home.titleSoft)}</span></h1>
+        <h1 class="t-hero"><span class="rise"><span>${esc(C.home.title)}</span></span><span class="rise"><span class="soft grad-text">${esc(C.home.titleSoft)}</span></span></h1>
         <p class="t-body muted">${esc(C.home.body)}</p>
         <div class="cta"><a class="btn primary" href="#game-sprint">${icon("zap")}${esc(C.home.primary)}</a><a class="btn secondary" href="#learn">${esc(C.home.ctaLearn)}</a></div>
       </div>
-      <div class="demo" aria-hidden="true">
-        <div class="top"><span class="row" style="gap:10px"><span class="badge-icon" style="width:32px;height:32px;border-radius:10px">${icon("type")}</span><span class="t-headline">${esc(C.games.spell.title)}</span></span><span class="timer">1:24</span></div>
+      <div class="demo" aria-hidden="true" ${gameAttr("spell")}>
+        <div class="top"><span class="row" style="gap:10px"><span class="badge-icon grad" style="width:32px;height:32px;border-radius:10px">${icon("type")}</span><span class="t-headline">${esc(C.games.spell.title)}</span></span><span class="timer">1:24</span></div>
         <div class="word" id="demo-word"></div>
         <div class="cam" id="demo-cam">${handSkeleton()}<span class="status" id="demo-status"></span></div>
         <div class="bars"><span><i></i></span><span><i></i></span><span><i></i></span></div>
       </div>
     </div></div>
     <div class="facts">
-      <div class="fact"><span class="v">26</span><span class="k">${esc(C.home.factLetters)}</span></div>
-      <div class="fact"><span class="v">${Object.keys(GAMES).length}</span><span class="k">${esc(C.home.factGames)}</span></div>
-      <div class="fact"><span class="v">0 MB</span><span class="k">${esc(C.home.factUploads)}</span></div>
+      <div class="fact spot" data-reveal><span class="v grad-text">26</span><span class="k">${esc(C.home.factLetters)}</span></div>
+      <div class="fact spot" data-reveal><span class="v grad-text">${Object.keys(GAMES).length}</span><span class="k">${esc(C.home.factGames)}</span></div>
+      <div class="fact spot" data-reveal><span class="v grad-text">0 MB</span><span class="k">${esc(C.home.factUploads)}</span></div>
     </div>
+    <div class="marquee" aria-hidden="true"><div class="track">${[...ALPHA, ...ALPHA].map((L) => `<span class="mtile">${L}</span>`).join("")}</div></div>
     ${daily
       ? `<div class="featured" aria-disabled="true"><span class="ico">${icon("calendar")}</span><span class="copy"><span class="eyebrow">${esc(C.home.featured)}</span><span class="t-title2">${esc(C.games.daily.title)}</span><span class="t-subhead muted">${fmt(C.home.dailyDone, { score: daily.score })}</span></span><span class="chev">${icon("check")}</span></div>`
       : `<button class="featured" id="go-daily"><span class="ico">${icon("calendar")}</span><span class="copy"><span class="eyebrow">${esc(C.home.featured)}</span><span class="t-title2">${esc(C.games.daily.title)}</span><span class="t-subhead">${esc(C.games.daily.body)}</span></span><span class="chev">${icon("chevron-right")}</span></button>`}
     <div class="section">
       <div class="section-head"><h2 class="t-title1">${esc(C.home.gamesTitle)}</h2><span class="t-footnote muted row" style="gap:6px">${icon("flame")} ${days ? fmt(C.home.streak, { n: days }) : esc(C.home.streakNone)}</span></div>
-      <div class="games">${order.map((id) => `<a class="game-tile" href="#game-${id}">
-        <span class="badge-icon">${icon(GAMES[id].icon)}</span>
+      <div class="games">${order.map((id, i) => `<a class="game-tile spot tilt" data-reveal href="#game-${id}" ${gameAttr(id).replace('style="', 'style="--d:' + i * 70 + 'ms;')}>
+        <span class="badge-icon grad">${icon(GAMES[id].icon)}</span>
         <span class="copy"><span class="t-headline">${esc(C.games[id].title)}</span><span class="t-subhead muted">${esc(C.games[id].body)}</span></span>
         <span class="foot"><span>${GAMES[id].best && store.best(id) ? fmt(C.home.best, { score: store.best(id) }) : ""}</span><span class="go">${icon("chevron-right")}</span></span></a>`).join("")}</div>
     </div>
@@ -194,14 +196,18 @@ function GameIntro(id) {
   const g = C.games[id];
   view.innerHTML = `<section class="screen narrow">
     <a class="nav-back" href="#play">${icon("chevron-left")}${esc(C.tabs.play)}</a>
-    <div class="ready-head"><span class="badge-icon">${icon(GAMES[id].icon)}</span>
-      <div class="stack" style="gap:2px"><h1 class="t-large">${esc(g.title)}</h1>${GAMES[id].best ? `<span class="t-footnote muted">${esc(G.best)} ${store.best(id)}</span>` : ""}</div></div>
-    <p class="t-body muted">${esc(g.body)}</p>
+    <div class="banner" ${gameAttr(id)}>
+      <div class="floaters" aria-hidden="true"><span>${ALPHA[(id.length * 7) % 26]}</span><span>${ALPHA[(id.length * 11) % 26]}</span><span>${ALPHA[(id.length * 3) % 26]}</span></div>
+      <span class="big-icon">${icon(GAMES[id].icon)}</span>
+      <h1 class="t-large">${esc(g.title)}</h1>
+      <p class="t-body">${esc(g.body)}</p>
+      ${GAMES[id].best && store.best(id) ? `<span class="best-pill">${esc(G.best)} ${store.best(id)}</span>` : ""}
+    </div>
     <div class="section"><p class="eyebrow">${esc(G.rules)}</p>
       <ol class="rules">${g.rules.map((r, i) => `<li><span class="n">${i + 1}</span><span>${esc(r)}</span></li>`).join("")}</ol></div>
     ${id === "sprint" ? `<div class="opt-row"><span class="t-headline">${esc(G.allLetters)}</span><span class="seg" id="pool"><button type="button" data-v="0" aria-pressed="${!sprintAll}">${esc(C.settings.off)}</button><button type="button" data-v="1" aria-pressed="${sprintAll}">${esc(C.settings.on)}</button></span></div>` : ""}
     ${id === "duel" ? `<p class="t-footnote muted">${esc(G.duelNeedCamera)} ${esc(G.duelKeys)}</p>` : ""}
-    <div><button class="btn primary" id="go">${esc(G.start)}</button></div>
+    <div ${gameAttr(id)}><button class="btn primary" id="go">${icon("play")}${esc(G.start)}</button></div>
   </section>`;
   $("#pool")?.addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
@@ -277,12 +283,12 @@ function Run(id) {
   const spellLike = game instanceof Spell;
   const timed = game.timeLeft !== null && game.timeLeft !== undefined;
 
-  view.innerHTML = `<section class="screen narrow">
+  view.innerHTML = `<section class="screen narrow" ${gameAttr(id)}>
     <div class="play-bar">
-      <span class="title"><span class="badge-icon">${icon(GAMES[id].icon)}</span><span class="t-headline">${esc(gameTitle(id))}</span></span>
+      <span class="title"><span class="badge-icon grad">${icon(GAMES[id].icon)}</span><span class="t-headline">${esc(gameTitle(id))}</span></span>
       <div class="right">${timed ? `<span class="timer" id="timer">${mmss(game.timeLeft)}</span>` : ""}<button class="icon-btn" id="pause" aria-label="${esc(C.play.pause)}">${icon("pause")}</button></div>
     </div>
-    <div class="stage">
+    <div class="stage" ${gameAttr(id)}>
     <div id="body" class="stack-md"></div>
     <p class="flash" id="flash" aria-live="polite"></p>
     <div class="cam" id="cam"><div class="placeholder" id="ph"></div>${id === "duel" ? `<span class="divider"></span><span class="side-tag l">${esc(G.duelP1)}</span><span class="side-tag r">${esc(G.duelP2)}</span>` : ""}<span class="status" id="status" hidden></span></div>
@@ -341,6 +347,7 @@ function Run(id) {
     if (paused || finished) return;
     const r = game.sign(L, side);
     if (r === "hit" || r === "point") beep([880]);
+    if (r === "hit" || r === "point" || r === "word" || r === "win") queueMicrotask(() => burst($("#tgt"), r === "word" || r === "win" ? 22 : 12)); // after the re-render below
     if (r === "word" || r === "win") beep([660, 990], 0.1);
     if (r === "point") say(tx(G.duelPoint, { player: side === "left" ? G.duelP1 : G.duelP2 }), true);
     if (game.over) { finish(); return; }
@@ -452,9 +459,9 @@ function Results() {
   const val = (k, v) => v === null || v === undefined ? "–" : k === "avgMs" ? (v / 1000).toFixed(1) + "s" : v;
   const isDaily = id === "daily";
   const title = id === "duel" ? (r.winner ? tx(G.duelWins, { player: r.winner === "left" ? G.duelP1 : G.duelP2 }) : G.duelDraw) : isDaily ? C.results.dailyTitle : null;
-  view.innerHTML = `<section class="screen narrow">
+  view.innerHTML = `<section class="screen narrow" ${gameAttr(id)}>
     <div class="intro"><p class="eyebrow">${esc(gameTitle(id))}</p>${title ? `<h1 class="t-title1">${esc(title)}</h1>` : ""}</div>
-    ${id === "duel" ? "" : `<div class="score-card"><span class="eyebrow">${esc(id === "echo" ? G.echoLength : C.results.score)}</span><span class="score-big">${r.score}</span>${r.newBest ? `<span class="badge">${icon("trophy")}${esc(C.results.best)}</span>` : ""}</div>`}
+    ${id === "duel" ? "" : `<div class="score-card"><span class="eyebrow">${esc(id === "echo" ? G.echoLength : C.results.score)}</span><span class="score-big grad-text" data-count="${r.score}">0</span>${r.newBest ? `<span class="badge">${icon("trophy")}${esc(C.results.best)}</span>` : ""}</div>`}
     <div class="stats">${r.stats.map(([k, v]) => stat(val(k, v), LABEL[k] || k)).join("")}</div>
     ${(r.lines || []).length ? `<div class="card">${r.lines.map((l) => `<p class="t-callout">${esc(l)}</p>`).join("")}</div>` : ""}
     ${id === "duel" || id === "mystery" ? "" : `<div class="section"><p class="eyebrow">${esc(C.results.hardest)}</p>
@@ -464,6 +471,8 @@ function Results() {
       : `<button class="btn primary" id="again">${esc(C.results.again)}</button><a class="btn text" href="#play">${esc(C.results.home)}</a>`}</div>
   </section>`;
   $("#again")?.addEventListener("click", () => startGame(id, pending?.opts || {}));
+  countUp($(".score-big"));
+  if (r.newBest) setTimeout(() => burst($(".score-card"), 28), 400);
 }
 
 // ---------- S6 Learn ----------
@@ -614,6 +623,57 @@ function Settings() {
   };
 }
 
+// ---------- Motion layer: bursts, count-up, spotlight, tilt, scroll reveal ----------
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+function burst(el, n = 12) {
+  if (!el || reduceMotion()) return;
+  const b = document.createElement("span"); b.className = "burst";
+  for (let i = 0; i < n; i++) {
+    const a = (Math.PI * 2 * i) / n + Math.random() * 0.4, d = 60 + Math.random() * 60;
+    const p = document.createElement("i");
+    p.style.setProperty("--dx", `${Math.cos(a) * d}px`); p.style.setProperty("--dy", `${Math.sin(a) * d}px`);
+    p.style.width = p.style.height = `${5 + Math.random() * 6}px`;
+    b.appendChild(p);
+  }
+  if (getComputedStyle(el).position === "static") el.style.position = "relative";
+  el.appendChild(b); setTimeout(() => b.remove(), 800);
+}
+function countUp(el) {
+  if (!el) return;
+  const end = +el.dataset.count || 0;
+  if (reduceMotion() || end === 0) { el.textContent = end; return; }
+  const t0 = performance.now(), dur = 900;
+  const step = (now) => { const k = Math.min(1, (now - t0) / dur); el.textContent = Math.round(end * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+  setTimeout(() => { el.textContent = end; }, dur + 150); // never leave the real score unshown
+}
+document.addEventListener("pointermove", (e) => {
+  const s = e.target.closest?.(".spot, .tilt");
+  if (!s) return;
+  const r = s.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  s.style.setProperty("--mx", `${x}px`); s.style.setProperty("--my", `${y}px`);
+  if (s.classList.contains("tilt") && !reduceMotion() && e.pointerType === "mouse") {
+    s.style.setProperty("--ry", `${((x / r.width) - 0.5) * 8}deg`); s.style.setProperty("--rx", `${(0.5 - (y / r.height)) * 8}deg`);
+  }
+}, { passive: true });
+document.addEventListener("pointerout", (e) => {
+  const s = e.target.closest?.(".tilt");
+  if (s && !s.contains(e.relatedTarget)) { s.style.setProperty("--rx", "0deg"); s.style.setProperty("--ry", "0deg"); }
+});
+let revealIO = null;
+function setupReveal() {
+  revealIO?.disconnect();
+  if (reduceMotion() || !("IntersectionObserver" in window)) return;
+  revealIO = new IntersectionObserver((entries) => entries.forEach((en) => {
+    if (!en.isIntersecting) return;
+    en.target.classList.add("reveal-in"); en.target.classList.remove("reveal-pre"); revealIO.unobserve(en.target);
+  }), { rootMargin: "0px 0px -8% 0px" });
+  view.querySelectorAll("[data-reveal]").forEach((el) => {
+    if (el.getBoundingClientRect().top < innerHeight) return; // already on screen: leave it fully visible
+    el.classList.add("reveal-pre"); revealIO.observe(el);
+  });
+}
+
 // ---------- Router ----------
 const ROUTES = { play: Home, game: GameIntro, camera: CameraSetup, practice: PracticeSetup, run: Run, results: Results, learn: Learn, letter: LetterDetail, progress: Progress, settings: Settings };
 const TAB_OF = { play: "play", game: "play", camera: "play", practice: "play", run: "play", results: "play", learn: "learn", letter: "learn", progress: "progress" };
@@ -630,9 +690,16 @@ function route() {
   document.body.classList.toggle("focus-mode", FOCUS.has(key));
   const t = TITLES[key] || (key === "game" || key === "run" ? C.games[arg]?.title : "");
   document.title = t ? `${t} · ${C.app.name}` : C.app.name;
-  ROUTES[key](arg);
-  window.scrollTo(0, 0);
-  view.focus({ preventScroll: true });
+  const render = () => { ROUTES[key](arg); window.scrollTo(0, 0); view.focus({ preventScroll: true }); setupReveal(); };
+  // View transition when available, but never let it hold the screen hostage: if the browser defers the callback
+  // (background tab, busy frame), render anyway after 200 ms. `once` makes sure it renders exactly one time.
+  let done = false;
+  const once = () => { if (!done) { done = true; render(); } };
+  if (document.startViewTransition && !reduceMotion() && route.ready && document.visibilityState === "visible") {
+    try { document.startViewTransition(once); } catch { once(); }
+    setTimeout(once, 200);
+  } else once();
+  route.ready = true;
 }
 window.addEventListener("hashchange", route);
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (location.hash === "#settings") Settings(); });

@@ -2,6 +2,21 @@
 
 Newest entry at the top. Append only. Format and rules: `docs/COLLAB.md`.
 
+## 2026-11-27 · web
+Done: **rename to Sign Max** and **v3 visuals** (gradients + motion). UI only; the human asked the app side to own game logic.
+- Name: "Sign Max" everywhere a person sees it (`copy.json` 1.5.0 `app.name`, mark "SM"). Code folders, the localStorage key
+  and the Xcode target keep their old names.
+- Visuals: accent gradients, per-game gradients, aurora background, kinetic hero headline, cursor spotlight + tilt, A–Z
+  marquee, hit bursts, count-up scores, scroll reveal, page transitions. All described in `DESIGN.md` §1c with SwiftUI hints.
+- Fixed: game screens now look like the rest of the site (banner intro + gradient stage per game).
+
+Changed shared: `tokens.json` 2.1.0 (`accents.*.gradientLight/gradientDark`, `gameColors`, `motion.spring`), `copy.json` 1.5.0
+(name, footer tagline, marquee), `DESIGN.md` §1c.
+Needs from app:
+1. Rename the visible app name to Sign Max (display name, Home title, about text).
+2. Apply §1c: game gradients on icons/intro/stage, accent gradient on primary buttons, aurora, hit feedback, springs.
+3. Echo levels: noted. The website's Echo will follow your E1–E3 rules; logic changes are yours to spec, I'll match the UI.
+
 ## 2026-11-27 16:40 · app
 Done: **Echo is now a level path** in the app (`mobile/Signblast/Games/EchoGame.swift`): E1 Level path, E2 Echo play,
 E3 Echo result. The human asked for it: "keep Echo, make it progressively harder by adding words, take inspiration from
