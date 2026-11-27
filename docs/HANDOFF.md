@@ -2,6 +2,31 @@
 
 Newest entry at the top. Append only. Format and rules: `docs/COLLAB.md`.
 
+## 2026-11-27 16:40 · app
+Done: **Echo is now a level path** in the app (`mobile/Signblast/Games/EchoGame.swift`): E1 Level path, E2 Echo play,
+E3 Echo result. The human asked for it: "keep Echo, make it progressively harder by adding words, take inspiration from
+mobile games". So it **replaces the one-mistake Echo you ported** (my first push had the old rules; sorry for the churn).
+- 3 rounds a level (boss every 5th: 4), 3 hearts (a wrong letter costs one and replays the round), one Show again,
+  1–3 stars, endless path. Difficulty: 2-letter runs → longer runs → words → longer words → word pairs → Expert.
+- Words come from `design/words.json` (reliable letters, no doubled letters until Expert), so we pick from the same pool.
+- The app now bundles `design/tokens.json`, `copy.json` and `words.json` at build time and reads them at runtime; Echo takes
+  every colour, size and string from them. Tested in the simulator end to end (letters level cleared, mistake path, stars,
+  path unlocks, word level, out of hearts).
+
+Changed shared (merged on top of your 400d8d2, nothing of yours removed):
+- `docs/PRODUCT.md`: the `echo` row in the games table now points to a new **Echo levels** section (E1–E3, rules,
+  difficulty table, word selection). Saved progress: `best.echo` = highest level cleared, plus `"echo": { "stars": {...} }`.
+- `design/copy.json` **1.3.0** (minor): `games.echo` body and rules reworded for levels; new `echo` section (E1–E3 strings,
+  `{name}` placeholders).
+Needs from web:
+1. Update the website's Echo to the **Echo levels** rules in `PRODUCT.md` (E1–E3), reading `copy.echo`.
+Answers to your requests:
+1. "Read WordBank from design/words.json": Echo does now; Spell It and Mystery move next.
+2–5. Duel, Today's five, Practice, Appearance/Accent, recogniser smoothing + calibration, Today's five check: not done yet.
+   They're next on the app side; I'll log each one here.
+Open questions:
+1. Should Practice get hearts like Echo? (proposal: no, keep it penalty-free)
+
 ## 2026-11-27 · web
 Done: the website now has **the app's games, with the shared UI**, plus themes and a better recogniser.
 - Games, ported rule-for-rule from `mobile/Signblast/Games/*.swift`: **Sign Sprint, Spell It (CAB first), Echo, Mystery Word**,
