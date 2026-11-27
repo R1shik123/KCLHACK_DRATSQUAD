@@ -45,6 +45,7 @@ the website versions are in `web/js/games.js`.
 | `spell` | Spell It | Words, 90 s, first word always CAB, then `words.json → spell` shuffled. +50 per letter (+25 if hinted), +200 per word, 0.9 s pause after a word. Skip = miss on the current letter |
 | `echo` | Echo | A level path: watch a sequence, sign it back from memory. Letters first, then words. 3 hearts and one Show again per level, 1–3 stars, boss every 5th level. Full rules in **Echo levels** below. Best = highest level cleared |
 | `mystery` | Mystery Word | Hidden word + clue (`words.json → mystery`). Sign letters to guess, 6 wrong guesses per word. Solve = 100 + 20 × lives left. Game ends when a word isn't solved |
+| `blast` | Signblast | The original falling-letters shooter, brought back at the human's request. Letters fall in 5 lanes; hold a sign to shoot the lowest matching one. 3 lives, levels, words. Full rules in **Signblast** below. Best = highest score |
 | `duel` | Duel | Two players, one camera: Player 1 signs on the left half, Player 2 on the right. Same target for both; first to hold it gets the point. First to 10, or most after 60 s. Keyboard: P1 types, P2 holds Shift |
 | `daily` | Today's five | Spell It rules on the 5 seeded words of the day, no clock, once a day |
 | `practice` | Practice | Spell It rules on words made only of the letters you picked, no clock |
@@ -89,6 +90,27 @@ else, and never repeat a letter twice in a row. Echo does not change Sprint scor
 **Saved:** add `"echo": { "stars": { "1": 3, "2": 2 } }` to saved progress (best stars per cleared level). Best level = the
 highest cleared level.
 
+## Signblast (the original game, back by request)
+Added on 2026-11-27 because the human asked to "include the original space invasion game as well". It's the first Signblast
+(`app/game.js`), ported to `web/js/blast.js`. The board keeps the original pixel-arcade look (Press Start 2P, dark grid,
+invader-style blocks with little legs, green cannon, pink laser). That's a deliberate exception to the "no retro" rule in
+`DESIGN.md`. Everything around the board (play bar, score chips, camera, results) uses the normal design system.
+
+- **Levels** (8 hits clears one; the intro lets you start at any level): 1 Starter shapes `ABCDILVY` · 2 Open hands
+  `FUWKRXO` · 3 Fists + sideways `ESTMNGHPQJZ` · 4 Speed A–Z (+8 speed) · 5 Words (`CAB` always first, then `HI NO YES BYE CAT
+  DOG SUN FUN WOW LOVE HELP COOL NAME KIND PLAY SIGN`). Letter levels 1–3 add up (level 2 spawns from levels 1 and 2).
+- **Spawning:** up to 2 + level letters on screen; one every clamp(110 ÷ speed, 1.4, 6) s, ×1.6 on the Words level. A free
+  lane is preferred. The letter is picked Leitner-weighted (box 1→3, 2→2, 3→1.4, 4–5→1); a word weighs as its weakest letter.
+- **Speed:** starts at 14 + 3 × (level − 1) (+8 on level 4), +3 on each level-up. Adaptive: every 5 outcomes, more than 80%
+  hits gives ×1.1, under 60% gives ×0.9, clamped 8–45 px/s on a 240 × 300 board. Words fall at 0.75× speed.
+- **Shooting:** a held sign (or a typed key) hits the lowest matching letter. No match: "No X on screen", nothing lost. A word
+  is spelled letter by letter, +25 per letter; finishing a letter or word = +100 × multiplier, multiplier = min(5, 1 + combo ÷ 3).
+- **Missing:** a letter that reaches the line costs a life, resets the combo and puts that letter back in box 1. 3 lives.
+- **Hints:** once a letter is 60% of the way down, its `handshapes.json → short` text shows above it. Hint strength fades with
+  its box (1 → full, 2 → 75%, 3 → 45%, 4 → 20%, 5 → none).
+- **Pause:** pause button, Space or Esc, or leaving the tab. **Results:** score, level reached, hits, best combo, accuracy,
+  average sign time, and the letters that escaped (to practise). Saved as `best.blast`.
+
 ## Signing a letter (all games)
 1. The letter you need is highlighted with the hold ring (Sprint, Spell It, Today's five, Practice).
 2. While the recogniser reads that letter steadily, the ring fills. The camera pill shows the letter it currently reads.
@@ -127,7 +149,7 @@ Stored on the device only (localStorage on the website, AsyncStorage or equivale
   "input": "camera",
   "boxes": { "A": 3, "B": 1 },
   "streak": { "days": 4, "lastPlayed": "2026-11-27" },
-  "best": { "sprint": 600, "spell": 350, "echo": 12, "mystery": 340 },
+  "best": { "sprint": 600, "spell": 350, "echo": 12, "mystery": 340, "blast": 3600 },
   "echo": { "stars": { "1": 3, "2": 2 } },
   "appearance": "system",
   "accent": "blue",
