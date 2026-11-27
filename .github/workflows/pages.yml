@@ -3,9 +3,7 @@
 name: Deploy website
 
 on:
-  push:
-    branches: [main]
-    paths: ["web/**", "design/**", ".github/workflows/pages.yml"]
+  # Manual only: the live site is on Cloudflare Pages (docs/DEPLOY.md). Enable GitHub Pages first if you run this.
   workflow_dispatch:
 
 permissions:
