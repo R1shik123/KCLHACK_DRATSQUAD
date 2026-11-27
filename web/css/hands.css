@@ -1,0 +1,36 @@
+/* Handshape pictures (design/assets/handshapes, public domain). The drawings are dark line art on transparent,
+   so dark mode inverts them to light lines. */
+.hand { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hand, :root:not([data-theme="light"]) .ghost { filter: invert(1) hue-rotate(180deg); } }
+:root[data-theme="dark"] .hand, :root[data-theme="dark"] .ghost { filter: invert(1) hue-rotate(180deg); }
+
+/* Picture tiles: drawing fills the tile, the letter sits small in the corner */
+.tile.pic { padding: 14%; font-size: 0; }
+.tile.pic .hand { position: absolute; inset: 12% 12% 16%; width: 76%; height: 72%; opacity: .92; transition: transform var(--dur-base) var(--ease-spring); }
+.tile.pic:hover .hand { transform: scale(1.06); }
+.tile.pic .tl { position: absolute; left: 10px; bottom: 6px; font-size: var(--type-headline-size); line-height: 1; font-weight: 600; color: var(--color-ink); }
+.tile.pic.beta .tl { color: var(--color-muted); }
+.tile.pic.beta .hand { opacity: .55; }
+
+/* Letter page hero tile */
+.letter-big.pic { font-size: 0; }
+.letter-big.pic .hand { position: absolute; inset: 12%; width: 76%; height: 76%; }
+.letter-big.pic .tl { position: absolute; left: 12px; bottom: 8px; font-size: var(--type-title2-size); line-height: 1; font-weight: 600; color: var(--color-ink); }
+
+/* Ghost overlay on the camera: a faint handshape to line your hand up with */
+.cam .ghost {
+  position: absolute; z-index: 1; pointer-events: none; left: 50%; top: 50%; width: 46%; height: 82%;
+  object-fit: contain; transform: translate(-50%, -48%) scale(.96); opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease), transform var(--dur-slow) var(--ease);
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, .8));
+}
+.cam .ghost.on { opacity: .34; transform: translate(-50%, -48%) scale(1); animation: ghost-breathe 2.4s ease-in-out infinite; }
+@keyframes ghost-breathe { 50% { opacity: .22; } }
+.cam .ghost:not([src]) { display: none; }
+
+/* Picture hint card */
+.hint-card { gap: var(--space-md); }
+.hint-card .hint-img { width: 96px; height: 96px; flex: none; padding: 6px; background: var(--color-fill); border-radius: var(--radius-sm); }
+.hint-card .big { margin-left: auto; }
+
+@media (prefers-reduced-motion: reduce) { .cam .ghost.on { animation: none; } }

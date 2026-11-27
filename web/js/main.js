@@ -112,6 +112,8 @@ const tileClass = (L) => `tile${SOLID.has(L) ? "" : " beta"}${store.box(L) >= 5 
 const stat = (n, l) => `<div class="stat"><span class="n">${n}</span><span class="l">${esc(l)}</span></div>`;
 const chip = (id, v, k, cls = "") => `<div class="chip ${cls}"><span class="v" id="${id}">${v}</span><span class="k">${esc(k)}</span></div>`;
 const gameTitle = (id) => C.games[id].title;
+const HAND = (L) => `../design/assets/handshapes/${L}.svg`;
+const handImg = (L, cls = "") => `<img class="hand ${cls}" src="${HAND(L)}" alt="${esc(tx(C.learn.handAlt, { letter: L }))}" decoding="async">`;
 const gameAttr = (id) => `data-game="${id}" style="--ga:var(--game-${id}-a);--gb:var(--game-${id}-b)"`;
 const mmss = (ms) => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
@@ -303,7 +305,7 @@ function Run(id) {
     <div class="stage" ${gameAttr(id)}>
     <div id="body" class="stack-md"></div>
     <p class="flash" id="flash" aria-live="polite"></p>
-    <div class="cam" id="cam"><div class="placeholder" id="ph"></div>${id === "duel" ? `<span class="divider"></span><span class="side-tag l">${esc(G.duelP1)}</span><span class="side-tag r">${esc(G.duelP2)}</span>` : ""}<span class="status" id="status" hidden></span></div>
+    <div class="cam" id="cam"><div class="placeholder" id="ph"></div><img class="ghost" id="ghost" alt="" aria-hidden="true">${id === "duel" ? `<span class="divider"></span><span class="side-tag l">${esc(G.duelP1)}</span><span class="side-tag r">${esc(G.duelP2)}</span>` : ""}<span class="status" id="status" hidden></span></div>
     <div class="play-foot" id="foot"></div>
     </div>
     <div class="hint-card" id="hint-card" hidden></div>
@@ -312,24 +314,32 @@ function Run(id) {
 
   // ----- per-game rendering -----
   const expected = () => game instanceof Sprint ? game.target : spellLike ? game.current : game instanceof Echo && game.phase === "input" ? game.sequence[game.entered] : null;
-  function showHint(L) {
-    const h = HS.letters[L]; if (!h) { hintCard.hidden = true; return; }
-    hintCard.innerHTML = `<span class="big">${L}</span><span class="stack" style="gap:2px"><span class="t-headline">${esc(h.short)}</span><span class="t-subhead muted">${esc(h.how)}</span></span>`;
-    hintCard.hidden = false;
+  // Picture hints: the handshape drawing in the hint card plus a faint ghost of it over the camera to line your hand up with.
+  const ghost = $("#ghost");
+  function setGhost(L) {
+    if (!ghost) return;
+    if (L) { if (ghost.dataset.l !== L) { ghost.src = HAND(L); ghost.dataset.l = L; } ghost.classList.add("on"); }
+    else ghost.classList.remove("on");
   }
+  function showHint(L) {
+    if (!HS.letters[L]) { hintCard.hidden = true; setGhost(null); return; }
+    hintCard.innerHTML = `${handImg(L, "hint-img")}<span class="big">${L}</span>`;
+    hintCard.hidden = false; setGhost(L);
+  }
+  const hideHint = () => { hintCard.hidden = true; setGhost(id === "practice" && spellLike ? game.current : null); };
   function render(anim) {
     if (finished) return;
     if (game instanceof Sprint) {
       body.innerHTML = `<div class="chips">${chip("c1", game.score, G.score, "accent")}${chip("c2", "×" + game.multiplier, G.multiplier)}${chip("c3", game.combo, G.combo)}</div>
         <div class="target ${anim ? "pop" : ""}" id="tgt">${game.target}${ringSvg()}</div>`;
       foot.innerHTML = `<span></span><button class="btn text" id="skip">${esc(C.play.skip)}</button>`;
-      game.showHint ? showHint(game.target) : (hintCard.hidden = true);
+      game.showHint ? showHint(game.target) : hideHint();
     } else if (spellLike) {
       const w = game.word || "";
       body.innerHTML = `<div class="chips">${chip("c1", game.score, G.score, "accent")}${chip("c2", game.wordsDone, C.play.words)}${chip("c3", game.lettersDone, C.results.letters)}</div>
         <div class="word ${anim ? "entering" : ""}" id="tgt">${[...w].map((ch, i) => i < game.pos ? `<span class="ch done">${ch}</span>` : i === game.pos ? `<span class="ch cur">${ch}${ringSvg()}</span>` : `<span class="ch next">${ch}</span>`).join("")}</div>`;
       foot.innerHTML = `<button class="btn text" id="hint">${esc(C.play.hint)}</button><button class="btn text" id="skip">${esc(C.play.skip)}</button>`;
-      game.hintShown ? showHint(game.current) : (hintCard.hidden = true);
+      game.hintShown ? showHint(game.current) : hideHint();
     } else if (game instanceof Echo) {
       const input = game.phase === "input";
       body.innerHTML = `<div class="chips">${chip("c1", game.sequence.length, G.echoLength, "accent")}${chip("c2", game.best, G.best)}${chip("c3", game.peeks, G.echoPeek)}</div>
@@ -491,7 +501,8 @@ function Results() {
 function Learn() {
   view.innerHTML = `<section class="screen">
     <div class="intro"><p class="eyebrow">${esc(C.learn.eyebrow)}</p><h1 class="t-large">${esc(C.learn.title)}</h1><p class="t-body muted">${esc(C.learn.body)}</p></div>
-    <div class="tiles">${ALPHA.map((L) => `<a class="${tileClass(L)}" href="#letter-${L}" aria-label="${L}${SOLID.has(L) ? "" : ", " + esc(C.learn.beta)}">${L}</a>`).join("")}</div>
+    <div class="tiles pics">${ALPHA.map((L) => `<a class="${tileClass(L)} pic" href="#letter-${L}" aria-label="${L}${SOLID.has(L) ? "" : ", " + esc(C.learn.beta)}">${handImg(L)}<span class="tl">${L}</span></a>`).join("")}</div>
+    <p class="t-footnote muted">${esc(C.learn.credit)}</p>
   </section>`;
 }
 
@@ -507,7 +518,7 @@ function LetterDetail(L) {
       <span class="row" style="gap:0"><a class="icon-btn" href="#letter-${ALPHA[(i + 25) % 26]}" aria-label="Previous letter">${icon("chevron-left")}</a><a class="icon-btn" href="#letter-${ALPHA[(i + 1) % 26]}" aria-label="Next letter">${icon("chevron-right")}</a></span>
     </div>
     <div class="letter-hero">
-      <div class="letter-big" id="big">${L}${ringSvg()}</div>
+      <div class="letter-big pic" id="big">${handImg(L)}<span class="tl">${L}</span>${ringSvg()}</div>
       <div class="stack">
         <div class="row" style="gap:6px" id="badges">${store.box(L) >= 5 ? `<span class="badge">${esc(C.learn.mastered)}</span>` : ""}${personal() ? `<span class="badge">${esc(C.learn.personal)}</span>` : ""}</div>
         <h1 class="t-title2">${esc(h.short)}</h1>
@@ -515,7 +526,7 @@ function LetterDetail(L) {
       </div>
     </div>
     <div class="section"><p class="eyebrow">${esc(C.learn.how)}</p><p class="t-body">${esc(h.how)}</p></div>
-    <div class="cam" id="cam"><div class="placeholder" id="ph">${icon("camera")}</div><span class="status" id="status" hidden></span></div>
+    <div class="cam" id="cam"><div class="placeholder" id="ph">${icon("camera")}</div><img class="ghost on" src="${HAND(L)}" alt="" aria-hidden="true"><span class="status" id="status" hidden></span></div>
     <div class="actions"><button class="btn primary" id="check">${esc(C.learn.check)}</button><button class="btn text" id="practise">${esc(C.learn.practise)}</button></div>
     <div class="card" id="teach">
       <div class="spread"><span class="t-headline">${esc(C.learn.teach)}</span>${personal() ? `<button class="btn text" id="forget">${esc(C.learn.forget)}</button>` : ""}</div>

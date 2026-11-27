@@ -1,6 +1,6 @@
 {
   "$schema": "Signblast shared UI text. Both the website and the app use these exact strings. Add keys here before using new text on either side. {x} marks a value filled in at runtime.",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "app": {
     "name": "Sign Max",
     "tagline": "Learn to fingerspell by playing.",
@@ -76,7 +76,7 @@
   },
   "play": {
     "eyebrow": "Spell",
-    "hint": "Show hint",
+    "hint": "Show me",
     "skip": "Skip",
     "pause": "Pause",
     "paused": "Paused",
@@ -119,7 +119,9 @@
     "teaching": "Recording {done} of {n}",
     "taught": "Learned your {letter}",
     "forget": "Forget my samples",
-    "personal": "Personalised"
+    "personal": "Personalised",
+    "handAlt": "ASL handshape for {letter}",
+    "credit": "Handshape drawings: public domain (wpclipart), via Wikimedia Commons"
   },
   "progress": {
     "eyebrow": "Progress",

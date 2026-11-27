@@ -9,6 +9,7 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(join(out, "design"), { recursive: true });
 cpSync("web", out, { recursive: true, filter: (p) => !p.endsWith("README.md") });
 for (const f of readdirSync("design")) if (f.endsWith(".json") || f === "tokens.css") cpSync(join("design", f), join(out, "design", f));
+cpSync(join("design", "assets"), join(out, "design", "assets"), { recursive: true });
 
 const rewrite = (file) => writeFileSync(file, readFileSync(file, "utf8").replaceAll("../design/", "design/"));
 rewrite(join(out, "index.html"));

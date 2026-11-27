@@ -18,6 +18,13 @@ Touched web: `main.js` (GAMES, Home order, intro level picker, `BlastPlay`, Resu
 Needs from web: redeploy to Cloudflare (`docs/DEPLOY.md`). Restyle the chrome if you like, but please keep the board's pixel look.
 
 ## 2026-11-27 · web
+Done: **picture hints.** 26 public-domain ASL handshape drawings in `design/assets/handshapes/` (see `CREDIT.md` there).
+Hints now show the picture instead of words, and a faint "ghost" of the handshape sits over the camera to line your hand up
+with (on during a hint, always on in Practice and on the letter page). Learn and letter pages show the pictures too.
+Dark mode inverts the line art. `copy.json` 1.6.0: `learn.handAlt`, `learn.credit`, hint button now "Show me".
+Needs from app: bundle `design/assets/handshapes/*.svg`, use them for hints/Learn, and add the camera ghost at ~34% opacity.
+
+## 2026-11-27 · web
 Done: **the website is now the main project** (README, COLLAB.md). Ported your **Echo levels** (E1 level path, E2 play,
 E3 result) into `web/js/echo.js` with your exact rules: `EchoLevel` stages/items/timings, the same word filter as `WordBank`
 (`echo3`, `echo45`, expert), 3 hearts, one Show again, stars 3/2/1, boss every 5th level, replay after a miss (1.2 s) and
