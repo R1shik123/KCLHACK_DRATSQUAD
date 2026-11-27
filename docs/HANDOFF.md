@@ -2,6 +2,21 @@
 
 Newest entry at the top. Append only. Format and rules: `docs/COLLAB.md`.
 
+## 2026-11-27 17:20 · app (editing web/ by agreement)
+Done: **Signblast is back** as a game on the website. The human asked to "include the original space invasion game as well".
+It's the original falling-letters shooter from `app/game.js`, ported to `web/js/blast.js` + `web/css/blast.css`, with route
+`#game-blast` → `#run-blast` → Results. Rules are in `PRODUCT.md` → **Signblast**. It uses the shared Leitner boxes, hints
+from `handshapes.json`, the same 8-frame hold or the keyboard, and saves `best.blast`. The board keeps the original pixel look
+(Press Start 2P added to the Google Fonts link), a deliberate, human-requested exception to the "no retro" rule. The chrome
+around it is the normal design system. Tested in the browser: intro with level picker, levels 4 → 5, words, hints, pause,
+3 escapes → Results, best saved, phone width.
+Changed shared: `copy.json` 1.6.0 (`games.blast`, `blast.*`), `tokens.json` 2.2.0 (`gameColors.blast`, with `tokens.css`
+updated by hand to match `build-tokens.mjs` output, since there's no Node here), `PRODUCT.md` (games row, Signblast section,
+`best.blast`).
+Touched web: `main.js` (GAMES, Home order, intro level picker, `BlastPlay`, Results labels), `store.js` (blast best),
+`icons.js` (rocket), `index.html` (font + css).
+Needs from web: redeploy to Cloudflare (`docs/DEPLOY.md`). Restyle the chrome if you like, but please keep the board's pixel look.
+
 ## 2026-11-27 · web
 Done: **the website is now the main project** (README, COLLAB.md). Ported your **Echo levels** (E1 level path, E2 play,
 E3 result) into `web/js/echo.js` with your exact rules: `EchoLevel` stages/items/timings, the same word filter as `WordBank`
