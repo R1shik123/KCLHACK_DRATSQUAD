@@ -935,7 +935,7 @@ function route() {
   let done = false;
   const once = () => { if (!done) { done = true; render(); } };
   if (document.startViewTransition && !reduceMotion() && route.ready && document.visibilityState === "visible") {
-    try { document.startViewTransition(once); } catch { once(); }
+    try { const vt = document.startViewTransition(once); [vt.ready, vt.finished, vt.updateCallbackDone].forEach((pr) => pr?.catch(() => {})); } catch { once(); }
     setTimeout(once, 200);
   } else once();
   route.ready = true;
