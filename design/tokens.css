@@ -1,4 +1,4 @@
-/* GENERATED from design/tokens.json by design/build-tokens.mjs. Do not edit by hand. Tokens v2.1.0 */
+/* GENERATED from design/tokens.json by design/build-tokens.mjs. Do not edit by hand. Tokens v2.2.0 */
 :root {
   color-scheme: light;
   --color-bg: #F5F5F7;
@@ -138,6 +138,7 @@
 :root { --game-spell-a: #0A84FF; --game-spell-b: #5E5CE6; }
 :root { --game-echo-a: #BF5AF2; --game-echo-b: #FF375F; }
 :root { --game-mystery-a: #30D158; --game-mystery-b: #0FB5AE; }
+:root { --game-blast-a: #FF5CA8; --game-blast-b: #5CC8FF; }
 :root { --game-duel-a: #FF453A; --game-duel-b: #FF9F0A; }
 :root { --game-practice-a: #64D2FF; --game-practice-b: #0A84FF; }
 :root { --game-daily-a: #5E5CE6; --game-daily-b: #BF5AF2; }
