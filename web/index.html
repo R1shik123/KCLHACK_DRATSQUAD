@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Signblast</title>
+  <meta name="description" content="Learn ASL fingerspelling by spelling real words with your hand.">
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="../design/tokens.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#view">Skip to content</a>
+  <header class="topbar" id="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#play" id="brand">Signblast</a>
+      <nav class="tabs" aria-label="Main">
+        <a href="#play" data-tab="play" id="tab-play">Play</a>
+        <a href="#learn" data-tab="learn" id="tab-learn">Learn</a>
+        <a href="#progress" data-tab="progress" id="tab-progress">Progress</a>
+      </nav>
+      <a class="icon-btn" href="#settings" id="settings-btn" aria-label="Settings"></a>
+    </div>
+  </header>
+  <main id="view" tabindex="-1"></main>
+  <div class="toast-host" id="toasts" aria-live="polite"></div>
+  <div class="sheet-host" id="sheet" hidden></div>
+  <noscript><p class="noscript">Signblast needs JavaScript to run.</p></noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
