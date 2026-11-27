@@ -62,12 +62,14 @@ ${accentCss()}`;
 function accentCss() {
   if (!t.accents) return "";
   const soft = Math.round((t.accentSoftOpacity ?? 0.14) * 100);
-  let out = `:root { --color-accent-soft: color-mix(in srgb, var(--color-accent) ${soft}%, transparent); }\n`;
+  let out = `:root { --color-accent-soft: color-mix(in srgb, var(--color-accent) ${soft}%, transparent); --ease-spring: ${t.motion.spring}; }\n`;
+  for (const [g, [a, b]] of Object.entries(t.gameColors || {})) if (!g.startsWith("$")) out += `:root { --game-${g}-a: ${a}; --game-${g}-b: ${b}; }\n`;
   for (const [id, a] of Object.entries(t.accents)) {
     if (id.startsWith("$") || id === "default") continue;
-    out += `:root[data-accent="${id}"] { --color-accent: ${a.light}; --color-accent-ink: ${a.inkLight}; }\n`;
-    out += `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="${id}"] { --color-accent: ${a.dark}; --color-accent-ink: ${a.inkDark}; } }\n`;
-    out += `:root[data-theme="dark"][data-accent="${id}"] { --color-accent: ${a.dark}; --color-accent-ink: ${a.inkDark}; }\n`;
+    const [l1, l2] = a.gradientLight || [a.light, a.light], [d1, d2] = a.gradientDark || [a.dark, a.dark];
+    out += `:root[data-accent="${id}"] { --color-accent: ${a.light}; --color-accent-ink: ${a.inkLight}; --grad-a: ${l1}; --grad-b: ${l2}; }\n`;
+    out += `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="${id}"] { --color-accent: ${a.dark}; --color-accent-ink: ${a.inkDark}; --grad-a: ${d1}; --grad-b: ${d2}; } }\n`;
+    out += `:root[data-theme="dark"][data-accent="${id}"] { --color-accent: ${a.dark}; --color-accent-ink: ${a.inkDark}; --grad-a: ${d1}; --grad-b: ${d2}; }\n`;
   }
   return out;
 }

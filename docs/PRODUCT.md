@@ -1,4 +1,4 @@
-# Signblast product spec (website + app)
+# Sign Max product spec (website + app)
 
 Both platforms build **the same screens, with the same names, the same flow and the same rules**.
 How things look is in `design/DESIGN.md`; the words are in `design/copy.json`.
@@ -36,7 +36,7 @@ Use these IDs in code, file names and commit messages (e.g. `web: S4 hold ring`)
 | **P1** | Pause sheet | Resume (primary) · End game (text) |
 
 ## Games (same set on both platforms)
-Ids match the app's `GameKind` and `copy.json` → `games`. Rules are ported one-to-one from `mobile/Signblast/Games/*.swift`;
+Ids match the app's `GameKind` and `copy.json` → `games`. Rules are ported one-to-one from `mobile/Sign Max/Games/*.swift`;
 the website versions are in `web/js/games.js`.
 
 | Id | Game | Rules |

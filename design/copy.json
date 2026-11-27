@@ -1,9 +1,10 @@
 {
   "$schema": "Signblast shared UI text. Both the website and the app use these exact strings. Add keys here before using new text on either side. {x} marks a value filled in at runtime.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "app": {
-    "name": "Signblast",
-    "tagline": "Learn to fingerspell by playing."
+    "name": "Sign Max",
+    "tagline": "Learn to fingerspell by playing.",
+    "short": "SM"
   },
   "common": {
     "back": "Back",
@@ -35,7 +36,8 @@
     "factLetters": "Handshapes",
     "factGames": "Games",
     "factUploads": "Video uploaded",
-    "demoWord": "SIGN"
+    "demoWord": "SIGN",
+    "marquee": "Fingerspell · Sprint · Spell It · Echo · Mystery Word · Duel · Today's five · Practice"
   },
   "modes": {
     "sprint": {
@@ -289,7 +291,7 @@
     "reliableLetters": "Reliable letters only"
   },
   "footer": {
-    "tagline": "Learn ASL fingerspelling by playing. Hand tracking runs on your device.",
+    "tagline": "Sign Max teaches ASL fingerspelling through quick games. Hand tracking runs on your device.",
     "alphabet": "Alphabet",
     "github": "GitHub"
   }

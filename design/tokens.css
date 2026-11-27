@@ -1,4 +1,4 @@
-/* GENERATED from design/tokens.json by design/build-tokens.mjs. Do not edit by hand. Tokens v2.0.0 */
+/* GENERATED from design/tokens.json by design/build-tokens.mjs. Do not edit by hand. Tokens v2.1.0 */
 :root {
   color-scheme: light;
   --color-bg: #F5F5F7;
@@ -133,25 +133,32 @@
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
 }
-:root { --color-accent-soft: color-mix(in srgb, var(--color-accent) 14%, transparent); }
-:root[data-accent="blue"] { --color-accent: #0071E3; --color-accent-ink: #FFFFFF; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="blue"] { --color-accent: #0A84FF; --color-accent-ink: #FFFFFF; } }
-:root[data-theme="dark"][data-accent="blue"] { --color-accent: #0A84FF; --color-accent-ink: #FFFFFF; }
-:root[data-accent="indigo"] { --color-accent: #5856D6; --color-accent-ink: #FFFFFF; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="indigo"] { --color-accent: #5E5CE6; --color-accent-ink: #FFFFFF; } }
-:root[data-theme="dark"][data-accent="indigo"] { --color-accent: #5E5CE6; --color-accent-ink: #FFFFFF; }
-:root[data-accent="purple"] { --color-accent: #9B3FD1; --color-accent-ink: #FFFFFF; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="purple"] { --color-accent: #BF5AF2; --color-accent-ink: #FFFFFF; } }
-:root[data-theme="dark"][data-accent="purple"] { --color-accent: #BF5AF2; --color-accent-ink: #FFFFFF; }
-:root[data-accent="pink"] { --color-accent: #D6204E; --color-accent-ink: #FFFFFF; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="pink"] { --color-accent: #FF375F; --color-accent-ink: #FFFFFF; } }
-:root[data-theme="dark"][data-accent="pink"] { --color-accent: #FF375F; --color-accent-ink: #FFFFFF; }
-:root[data-accent="orange"] { --color-accent: #C25700; --color-accent-ink: #FFFFFF; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="orange"] { --color-accent: #FF9F0A; --color-accent-ink: #1D1D1F; } }
-:root[data-theme="dark"][data-accent="orange"] { --color-accent: #FF9F0A; --color-accent-ink: #1D1D1F; }
-:root[data-accent="green"] { --color-accent: #1F7A35; --color-accent-ink: #FFFFFF; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="green"] { --color-accent: #30D158; --color-accent-ink: #1D1D1F; } }
-:root[data-theme="dark"][data-accent="green"] { --color-accent: #30D158; --color-accent-ink: #1D1D1F; }
-:root[data-accent="graphite"] { --color-accent: #1D1D1F; --color-accent-ink: #FFFFFF; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="graphite"] { --color-accent: #F5F5F7; --color-accent-ink: #1D1D1F; } }
-:root[data-theme="dark"][data-accent="graphite"] { --color-accent: #F5F5F7; --color-accent-ink: #1D1D1F; }
+:root { --color-accent-soft: color-mix(in srgb, var(--color-accent) 14%, transparent); --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
+:root { --game-sprint-a: #FF9F0A; --game-sprint-b: #FF375F; }
+:root { --game-spell-a: #0A84FF; --game-spell-b: #5E5CE6; }
+:root { --game-echo-a: #BF5AF2; --game-echo-b: #FF375F; }
+:root { --game-mystery-a: #30D158; --game-mystery-b: #0FB5AE; }
+:root { --game-duel-a: #FF453A; --game-duel-b: #FF9F0A; }
+:root { --game-practice-a: #64D2FF; --game-practice-b: #0A84FF; }
+:root { --game-daily-a: #5E5CE6; --game-daily-b: #BF5AF2; }
+:root[data-accent="blue"] { --color-accent: #0071E3; --color-accent-ink: #FFFFFF; --grad-a: #0071E3; --grad-b: #7B5CFF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="blue"] { --color-accent: #0A84FF; --color-accent-ink: #FFFFFF; --grad-a: #0A84FF; --grad-b: #8E6BFF; } }
+:root[data-theme="dark"][data-accent="blue"] { --color-accent: #0A84FF; --color-accent-ink: #FFFFFF; --grad-a: #0A84FF; --grad-b: #8E6BFF; }
+:root[data-accent="indigo"] { --color-accent: #5856D6; --color-accent-ink: #FFFFFF; --grad-a: #5856D6; --grad-b: #C04CFF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="indigo"] { --color-accent: #5E5CE6; --color-accent-ink: #FFFFFF; --grad-a: #5E5CE6; --grad-b: #D16BFF; } }
+:root[data-theme="dark"][data-accent="indigo"] { --color-accent: #5E5CE6; --color-accent-ink: #FFFFFF; --grad-a: #5E5CE6; --grad-b: #D16BFF; }
+:root[data-accent="purple"] { --color-accent: #9B3FD1; --color-accent-ink: #FFFFFF; --grad-a: #9B3FD1; --grad-b: #FF4D8D; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="purple"] { --color-accent: #BF5AF2; --color-accent-ink: #FFFFFF; --grad-a: #BF5AF2; --grad-b: #FF6B9E; } }
+:root[data-theme="dark"][data-accent="purple"] { --color-accent: #BF5AF2; --color-accent-ink: #FFFFFF; --grad-a: #BF5AF2; --grad-b: #FF6B9E; }
+:root[data-accent="pink"] { --color-accent: #D6204E; --color-accent-ink: #FFFFFF; --grad-a: #D6204E; --grad-b: #FF8A3D; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="pink"] { --color-accent: #FF375F; --color-accent-ink: #FFFFFF; --grad-a: #FF375F; --grad-b: #FF9F45; } }
+:root[data-theme="dark"][data-accent="pink"] { --color-accent: #FF375F; --color-accent-ink: #FFFFFF; --grad-a: #FF375F; --grad-b: #FF9F45; }
+:root[data-accent="orange"] { --color-accent: #C25700; --color-accent-ink: #FFFFFF; --grad-a: #C25700; --grad-b: #FF4D6D; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="orange"] { --color-accent: #FF9F0A; --color-accent-ink: #1D1D1F; --grad-a: #FF9F0A; --grad-b: #FF5E62; } }
+:root[data-theme="dark"][data-accent="orange"] { --color-accent: #FF9F0A; --color-accent-ink: #1D1D1F; --grad-a: #FF9F0A; --grad-b: #FF5E62; }
+:root[data-accent="green"] { --color-accent: #1F7A35; --color-accent-ink: #FFFFFF; --grad-a: #1F7A35; --grad-b: #12B5A6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="green"] { --color-accent: #30D158; --color-accent-ink: #1D1D1F; --grad-a: #30D158; --grad-b: #2EC4B6; } }
+:root[data-theme="dark"][data-accent="green"] { --color-accent: #30D158; --color-accent-ink: #1D1D1F; --grad-a: #30D158; --grad-b: #2EC4B6; }
+:root[data-accent="graphite"] { --color-accent: #1D1D1F; --color-accent-ink: #FFFFFF; --grad-a: #1D1D1F; --grad-b: #5A5A63; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="graphite"] { --color-accent: #F5F5F7; --color-accent-ink: #1D1D1F; --grad-a: #F5F5F7; --grad-b: #A1A1AA; } }
+:root[data-theme="dark"][data-accent="graphite"] { --color-accent: #F5F5F7; --color-accent-ink: #1D1D1F; --grad-a: #F5F5F7; --grad-b: #A1A1AA; }

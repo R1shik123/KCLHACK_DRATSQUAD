@@ -1,4 +1,4 @@
-# Signblast UI contract
+# Sign Max UI contract
 
 The website (`web/`) and the app (`mobile/`) must look and behave like **one product**. This file says how.
 If something you want to build isn't covered here, add it here first (see `docs/COLLAB.md`), then build it.
@@ -41,6 +41,30 @@ The first version looked flat. v2 is what both platforms build now:
   grid, and a site footer. A faint radial `accentSoft` aura sits behind the hero (the only gradient).
 - **Navigation:** brand mark (accent squircle with "S") + name; tabs in a pill-shaped segmented track with a raised active tab.
 - **Game screens:** the game sits in one raised white **stage** card (`md` shadow): stat chips, game area, flash line, camera, buttons.
+
+## 1c. v3: gradients and motion (name: Sign Max)
+The product is now called **Sign Max** (`copy.json → app.name`, short mark "SM"). The human asked for an exciting, moving UI.
+Every effect has a job: guide attention, confirm an action, or show depth. Reduced motion switches all movement off.
+- **Accent gradient:** each accent has two stops (`tokens.json → accents.*.gradientLight / gradientDark`), always at 135°.
+  Used on: primary buttons (plus a white shine sweep on hover), the brand mark, the hero's second headline line (slow shimmer),
+  fact numbers, the score on Results.
+- **Game colours:** every game has its own gradient (`tokens.json → gameColors`): Sprint orange→red, Spell It blue→indigo,
+  Echo purple→red, Mystery green→teal, Duel red→orange, Practice cyan→blue, Today's five indigo→purple. Used on the game's
+  icon badge (white icon), its intro **banner** (full gradient card with floating letters), the game **stage** (gradient edge +
+  soft glow behind it), the score chip, the current letter, the hold ring and the low-time timer.
+- **Aurora:** three huge blurred colour fields (accent stops + teal) drift slowly behind every page at 22% (28% dark), plus a
+  3.5% film grain so gradients don't band. Dimmer during games.
+- **Kinetic headline:** the hero's two lines rise into place on load (transform only).
+- **Cursor:** cards with `spot` get a soft light that follows the cursor and a gradient edge on hover; game tiles also **tilt**
+  in 3D (max 4°). Touch devices skip tilt.
+- **Letter strip:** an endless marquee of A–Z tiles on Home (every 4th tile in the accent gradient); pauses on hover.
+- **Feedback:** a particle burst in the game's colours on every hit (bigger on a finished word / duel win / new best), a spring
+  "pop" on the target, the Results score counts up.
+- **Scroll reveal:** cards below the fold slide up as they enter (they start at 35% opacity, never invisible).
+- **Page transitions:** View Transitions API cross-fade + slide between screens, with a 200 ms fallback so a screen change can
+  never stall.
+- **App equivalents:** SwiftUI `LinearGradient` at 135°, `.phaseAnimator` / `withAnimation(.spring)`, `TimelineView` for the
+  aurora, `sensoryFeedback` with the burst, `matchedGeometryEffect` for screen transitions.
 
 ## 2. Colour
 Use roles, never raw hex. Names match `tokens.json` → `color.light` / `color.dark`.
