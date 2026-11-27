@@ -15,8 +15,27 @@ struct PlayView: View {
                 Text(store.practisedToday ? "You practised today. Nice." : "Play a round to keep your streak going.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
-            Section("Games") {
-                ForEach(GameKind.allCases) { game in
+            Section {
+                NavigationLink {
+                    EchoMapView()
+                } label: {
+                    VStack(alignment: .leading, spacing: DS.space("xs")) {
+                        Text(Copy.t("echo.eyebrow")).eyebrowStyle()
+                        Text(Copy.t("echo.continue", ["level": store.echoHighest + 1]))
+                            .font(DS.font("title2")).foregroundStyle(DS.color("ink"))
+                        Text(Copy.t("games.echo.body")).font(DS.font("callout")).foregroundStyle(DS.color("muted"))
+                        HStack(spacing: DS.space("xxs")) {
+                            Image(systemName: "star.fill").font(.system(size: 12))
+                            Text("\(store.echoTotalStars)").font(DS.font("footnote").monospacedDigit())
+                        }
+                        .foregroundStyle(DS.color("ink"))
+                    }
+                    .padding(.vertical, DS.space("xs"))
+                }
+                .accessibilityIdentifier("game-echo")
+            }
+            Section("More games") {
+                ForEach(GameKind.allCases.filter { $0 != .echo }) { game in
                     NavigationLink {
                         gameView(game)
                     } label: {
@@ -42,7 +61,7 @@ struct PlayView: View {
         switch game {
         case .sprint: SprintView()
         case .spell: SpellView()
-        case .echo: EchoView()
+        case .echo: EchoMapView()
         case .mystery: MysteryView()
         }
     }

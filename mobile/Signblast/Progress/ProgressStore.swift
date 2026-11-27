@@ -16,7 +16,7 @@ enum GameKind: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .sprint: return "60 seconds. Sign each letter as fast as you can."
         case .spell: return "Fingerspell words from emoji clues."
-        case .echo: return "Watch a sequence of letters, then sign it back from memory."
+        case .echo: return Copy.t("games.echo.body")
         case .mystery: return "Guess the hidden word by signing letters."
         }
     }
@@ -51,6 +51,7 @@ struct SaveData: Codable {
     var days: [String: Int] = [:]           // "yyyy-MM-dd" -> sessions that day
     var bests: [String: Int] = [:]
     var history: [RoundRecord] = []
+    var echoStars: [String: Int]? = nil     // Echo: best stars per cleared level (optional so older saves still load)
 }
 
 /// Everything the learner has done, saved on this phone (UserDefaults). Nothing is sent anywhere.
@@ -121,6 +122,23 @@ final class ProgressStore: ObservableObject {
     func markToday() {
         data.days[Self.dayKey(Date()), default: 0] += 1
         save()
+    }
+
+    // MARK: Echo level path
+
+    var echoHighest: Int { (data.echoStars ?? [:]).keys.compactMap { Int($0) }.max() ?? 0 }
+    var echoTotalStars: Int { (data.echoStars ?? [:]).values.reduce(0, +) }
+    func echoStars(_ level: Int) -> Int { data.echoStars?[String(level)] ?? 0 }
+
+    /// Records a cleared level (keeps its best stars). Returns true if this unlocked a new level.
+    @discardableResult
+    func recordEcho(level: Int, stars: Int) -> Bool {
+        let before = echoHighest
+        var map = data.echoStars ?? [:]
+        map[String(level)] = max(map[String(level)] ?? 0, stars)
+        data.echoStars = map
+        finish(.echo, score: echoHighest, accuracy: nil)   // best for Echo = highest level cleared
+        return level > before
     }
 
     func reset() {

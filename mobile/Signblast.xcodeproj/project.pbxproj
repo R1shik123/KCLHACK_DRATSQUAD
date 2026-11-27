@@ -51,6 +51,7 @@
 				5B1A00000000000000000008 /* Sources */,
 				5B1A00000000000000000003 /* Frameworks */,
 				5B1A00000000000000000009 /* Resources */,
+				5B1A00000000000000000010 /* Copy shared design files */,
 			);
 			buildRules = (
 			);
@@ -110,6 +111,33 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		5B1A00000000000000000010 /* Copy shared design files */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/../design/tokens.json",
+				"$(SRCROOT)/../design/copy.json",
+				"$(SRCROOT)/../design/words.json",
+			);
+			name = "Copy shared design files";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/tokens.json",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/copy.json",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/words.json",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# design/ is the shared UI contract with the website (docs/COLLAB.md). Bundle it, never copy values into Swift.\nset -e\nmkdir -p \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\ncp \"$SRCROOT/../design/tokens.json\" \"$SRCROOT/../design/copy.json\" \"$SRCROOT/../design/words.json\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		5B1A00000000000000000008 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -162,6 +190,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Signblast;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Signblast reads your handshapes on this phone to check your signs. Video never leaves the device.";
@@ -189,6 +218,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Signblast;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Signblast reads your handshapes on this phone to check your signs. Video never leaves the device.";

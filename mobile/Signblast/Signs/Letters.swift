@@ -67,6 +67,16 @@ enum WordBank {
         .init(word: "ICE", emoji: "🧊"), .init(word: "DUCK", emoji: "🦆"),
     ]
 
+    // Echo words come from the shared list (design/words.json) so the website picks from exactly the same pool.
+    // Up to Expert: only reliable letters and no doubled letters, so every sign is one the camera reads well.
+    private static func isCameraFriendly(_ w: String) -> Bool {
+        w.allSatisfy { HandClassifier.solidLetters.contains(String($0)) } && zip(w, w.dropFirst()).allSatisfy { $0 != $1 }
+    }
+    static var echo3: [String] { DS.wordList.filter { $0.count == 3 && isCameraFriendly($0) } }
+    static var echo45: [String] { DS.wordList.filter { (4...6).contains($0.count) && isCameraFriendly($0) } }
+    /// Expert: any 3–5-letter word (hold a sign again to repeat a letter).
+    static var echoExpert: [String] { DS.wordList.filter { (3...5).contains($0.count) } }
+
     static let mystery: [(word: String, clue: String)] = [
         ("PIZZA", "Food"), ("TIGER", "Animal"), ("RIVER", "Nature"), ("GUITAR", "Music"), ("PLANET", "Space"),
         ("ROBOT", "Tech"), ("CASTLE", "Place"), ("BANANA", "Food"), ("WINTER", "Season"), ("JACKET", "Clothes"),
