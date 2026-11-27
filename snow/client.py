@@ -142,11 +142,33 @@ def save_round(r):
     return True
 
 
+def save_duel(d):
+    """Signblast 1v1: one row per duel; both players' per-letter stats as a VARIANT array. No-op without Snowflake."""
+    if not configured():
+        return False
+    _ensure_duels()
+    p = (d.get("players") or []) + [{}, {}]
+    query("insert into signblast_duels(level, seed, winner, reason, p1_score, p2_score, players) "
+          "select %s, %s, %s, %s, %s, %s, parse_json(%s)",
+          (d.get("level"), d.get("seed"), d.get("winner"), d.get("reason"), p[0].get("score"), p[1].get("score"),
+           json.dumps(d.get("players") or [])))
+    return True
+
+
+def _ensure_duels():
+    query("create table if not exists signblast_duels (played_at timestamp_tz default current_timestamp(), level int, "
+          "seed bigint, winner int, reason string, p1_score int, p2_score int, players variant)")
+
+
 def hardest_letters(limit=5):
-    """Across every player's rounds: letters with the most misses per attempt (Snowflake flattens the VARIANT)."""
+    """Across every solo round AND every duel player: letters with the most misses per attempt.
+    Snowflake flattens the VARIANT columns, so new letters need no schema change."""
+    _ensure_duels()
     return query(
+        "with reps as (select letters from signblast_rounds "
+        "  union all select p.value:letters as letters from signblast_duels, lateral flatten(input => players) p) "
         "select f.key as letter, sum(f.value:misses::int) as misses, sum(f.value:hits::int) as hits, "
         "round(sum(f.value:misses::int) / nullif(sum(f.value:hits::int) + sum(f.value:misses::int), 0), 3) as miss_rate "
-        "from signblast_rounds, lateral flatten(input => letters) f group by 1 order by miss_rate desc nulls last limit %s",
+        "from reps, lateral flatten(input => letters) f group by 1 order by miss_rate desc nulls last limit %s",
         (limit,),
     )

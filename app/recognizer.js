@@ -115,6 +115,11 @@ export class Recognizer {
     this.preview = null;          // canvas to draw the mirrored preview into
     this.listeners = new Set();   // ({letter, confidence, landmarks, stable}) per frame
     this.signListeners = new Set(); // (letter, source) when a sign is held
+    this.sideListeners = new Set(); // (side, letter) in split (1v1) mode: side 0 = left of the mirrored view, 1 = right
+    this.split = false;             // 1v1: one hand per player, each half of the camera has its own stability filter
+    this.sidePreviews = null;       // 1v1: [canvas, canvas], each shows one player's half of the mirrored view
+    this.wide = false;              // 1v1: ask for 16:9 so two people fit side by side
+    this.sideRun = [0, 0]; this.sideLast = [null, null];
     this.stateListeners = new Set();
     this.run = 0; this.lastLetter = null; this.lastTime = -1;
     this._loop = this._loop.bind(this);
@@ -122,6 +127,15 @@ export class Recognizer {
 
   onFrame(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   onSign(fn) { this.signListeners.add(fn); return () => this.signListeners.delete(fn); }
+  onSideSign(fn) { this.sideListeners.add(fn); return () => this.sideListeners.delete(fn); }
+  emitSideSign(side, letter) { this.sideListeners.forEach((f) => f(side, letter)); }
+  _size() { return this.wide ? { width: { ideal: 1280 }, height: { ideal: 720 } } : { width: { ideal: 640 }, height: { ideal: 480 } }; }
+  setWide(on) {
+    if (this.wide === !!on) return;
+    this.wide = !!on;
+    this.stream?.getVideoTracks()[0]?.applyConstraints(this._size()).catch(() => {}); // live switch, no restart
+  }
+  setSplit(on) { this.split = !!on; this.sideRun = [0, 0]; this.sideLast = [null, null]; this.run = 0; this.lastLetter = null; }
   onState(fn) { this.stateListeners.add(fn); fn(this.state); return () => this.stateListeners.delete(fn); }
   _setState(s, err = '') { this.state = s; this.error = err; this.stateListeners.forEach((f) => f(s, err)); }
   emitSign(letter, source) { this.signListeners.forEach((f) => f(letter, source)); }
@@ -131,7 +145,7 @@ export class Recognizer {
     if (!navigator.mediaDevices?.getUserMedia) { this._setState('error', 'This browser has no camera access.'); return; }
     this._setState('loading');
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+      this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', ...this._size() }, audio: false });
     } catch (e) {
       const denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
       this._setState(denied ? 'denied' : 'error', denied ? 'Camera permission was blocked.' : 'No camera found.');
@@ -172,6 +186,7 @@ export class Recognizer {
       this.lastTime = v.currentTime;
       let res = null;
       try { res = this.landmarker.detectForVideo(v, performance.now()); } catch { res = null; }
+      if (this.split) { this._splitFrame(res); requestAnimationFrame(this._loop); return; }
       // Up to two hands: classify each and keep the most confident letter, so either hand works.
       // Features are distance ratios, so left and right hands need no mirroring.
       let lm = null, out = { letter: null, guess: null, confidence: 0 };
@@ -191,7 +206,56 @@ export class Recognizer {
     requestAnimationFrame(this._loop);
   }
 
+  /** 1v1: assign each hand to the half of the (mirrored) view its wrist is in; one stability filter per side. */
+  _splitFrame(res) {
+    const sides = [null, null];
+    for (const hand of res?.landmarks || []) {
+      const side = 1 - hand[0].x < 0.5 ? 0 : 1;   // the preview is mirrored, so flip x to match what players see
+      const c = classify(hand);
+      const cur = sides[side];
+      if (!cur || (c.letter && !cur.letter) || (!!c.letter === !!cur.letter && c.confidence > cur.confidence)) sides[side] = { ...c, landmarks: hand };
+    }
+    const fired = [];
+    sides.forEach((o, i) => {
+      const L = o?.letter || null;
+      if (L && L === this.sideLast[i]) this.sideRun[i]++;
+      else { this.sideRun[i] = L ? 1 : 0; this.sideLast[i] = L; }
+      const r = this.sideRun[i];
+      if (L && (r === STABLE_FRAMES || (r > STABLE_FRAMES && (r - STABLE_FRAMES) % REARM_FRAMES === 0))) fired.push([i, L]);
+    });
+    const frame = { letter: null, guess: null, confidence: 0, landmarks: null, hold: 0, split: true,
+      sides: sides.map((o, i) => (o ? { letter: o.letter, confidence: o.confidence, landmarks: o.landmarks, hold: Math.min(1, this.sideRun[i] / STABLE_FRAMES) } : null)) };
+    this._draw(frame);
+    this.listeners.forEach((f) => f(frame));
+    for (const [i, L] of fired) this.emitSideSign(i, L);
+  }
+
+  /** 1v1: draw one player's half of the mirrored camera into its own canvas, cropped to fill it (object-fit: cover). */
+  _drawHalf(c, side, s) {
+    if (!c || !c.isConnected || !c.clientWidth) return;
+    const v = this.video, vw = v.videoWidth || 640, vh = v.videoHeight || 480;
+    const w = c.clientWidth, h = c.clientHeight || 1;
+    if (c.width !== w * 2 || c.height !== h * 2) { c.width = w * 2; c.height = h * 2; }
+    const g = c.getContext('2d'), a = c.width / c.height;
+    // Side 0 (left of the mirrored view) is the right half of the raw video, and vice versa.
+    let sx = side === 0 ? vw / 2 : 0, sy = 0, sw = vw / 2, sh = vh;
+    if (sw / sh > a) { const nw = sh * a; sx += (sw - nw) / 2; sw = nw; } else { const nh = sw / a; sy = (sh - nh) / 2; sh = nh; }
+    g.save();
+    g.scale(-1, 1);
+    g.drawImage(v, sx, sy, sw, sh, -c.width, 0, c.width, c.height);
+    g.restore();
+    if (s?.landmarks) {
+      g.fillStyle = s.letter ? (side ? '#5cc8ff' : '#ff5ca8') : '#ffffff';
+      for (const p of s.landmarks) {
+        g.beginPath();
+        g.arc((1 - (p.x * vw - sx) / sw) * c.width, ((p.y * vh - sy) / sh) * c.height, 6, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+  }
+
   _draw(frame) {
+    if (frame.split && this.sidePreviews) { this.sidePreviews.forEach((c, i) => this._drawHalf(c, i, frame.sides[i])); return; }
     const c = this.preview;
     if (!c || !c.isConnected) return;
     const v = this.video;
@@ -202,13 +266,13 @@ export class Recognizer {
     g.scale(-1, 1);
     g.drawImage(v, -c.width, 0, c.width, c.height);
     g.restore();
-    if (frame.landmarks) {
-      g.fillStyle = frame.letter ? '#7cf3a0' : '#ffffff';
-      for (const p of frame.landmarks) {
-        g.beginPath();
-        g.arc((1 - p.x) * c.width, p.y * c.height, 5, 0, Math.PI * 2);
-        g.fill();
-      }
-    }
+    const dots = (lm, color) => {
+      g.fillStyle = color;
+      for (const p of lm) { g.beginPath(); g.arc((1 - p.x) * c.width, p.y * c.height, 5, 0, Math.PI * 2); g.fill(); }
+    };
+    if (frame.split) {
+      g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(c.width / 2 - 2, 0, 4, c.height);  // the line between the players
+      frame.sides.forEach((s, i) => { if (s) dots(s.landmarks, s.letter ? (i ? '#5cc8ff' : '#ff5ca8') : '#ffffff'); });
+    } else if (frame.landmarks) dots(frame.landmarks, frame.letter ? '#7cf3a0' : '#ffffff');
   }
 }

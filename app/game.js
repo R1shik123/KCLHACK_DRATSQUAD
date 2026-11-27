@@ -8,8 +8,10 @@ export const LEVELS = [
   { name: 'Open hands', letters: [...'FUWKRXO'] },
   { name: 'Fists + sideways', letters: [...'ESTMNGHPQJZ'] },
   { name: 'Speed: A to Z', letters: [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'], speed: 8 },
-  { name: 'Words', words: ['HI', 'NO', 'YES', 'BYE', 'CAT', 'DOG', 'SUN', 'FUN', 'WOW', 'LOVE', 'HELP', 'COOL', 'NAME', 'KIND', 'PLAY', 'SIGN'] },
+  { name: 'Words', words: ['CAB', 'HI', 'NO', 'YES', 'BYE', 'CAT', 'DOG', 'SUN', 'FUN', 'WOW', 'LOVE', 'HELP', 'COOL', 'NAME', 'KIND', 'PLAY', 'SIGN'] },
 ];
+// The first word of the Words level is always CAB (all three are solid letters), in every mode.
+export const FIRST_WORD = 'CAB';
 // Cumulative pools for a full run (level n includes everything before it).
 export const LEVEL_LETTERS = LEVELS.map((l, i) => (l.words ? l.words : [...new Set(LEVELS.slice(0, i + 1).flatMap((x) => x.letters))]));
 export const HINTS = {
@@ -29,6 +31,31 @@ const PAL = { bg: '#0b0a1f', grid: '#1b1940', block: ['#ff5ca8', '#5cc8ff', '#ff
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
+// ---------- 1v1 ----------
+/** Small seeded PRNG (mulberry32), so a duel's letter schedule is reproducible from its seed. */
+export function seeded(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+/** One shared spawn schedule for both players: same letters, same lanes, same moments, same speed ramp.
+ * Spawns don't depend on how either player is doing, so the duel is fair. */
+export function duelPlan(level, seed = Date.now(), duration = 60) {
+  const rnd = seeded(seed), lv = LEVELS[level - 1], pool = lv.words || lv.letters;
+  const base = 16 + (level - 1) * 3 + (lv.speed || 0), ramp = 0.2;
+  const schedule = [];
+  let t = 1, lastLane = -1, last = null;
+  while (t < duration - 3) {
+    let letter = lv.words && !schedule.length ? FIRST_WORD : pool[Math.floor(rnd() * pool.length)];
+    if (letter === last && pool.length > 1) letter = pool[(pool.indexOf(letter) + 1) % pool.length];
+    let lane = Math.floor(rnd() * 5);
+    if (lane === lastLane) lane = (lane + 1 + Math.floor(rnd() * 4)) % 5;
+    schedule.push({ t: +t.toFixed(2), letter, lane });
+    last = letter; lastLane = lane;
+    t += clamp(80 / (base + t * ramp), 1.1, 4) * (lv.words ? 2.2 : 1) * (0.8 + rnd() * 0.4);
+  }
+  return { level, seed, duration, base, ramp, schedule };
+}
+
 export class Game {
   constructor(canvas, { boxes, onEnd, onHud, sound }) {
     this.c = canvas;
@@ -43,14 +70,16 @@ export class Game {
   }
 
   /** level: 1..5 to start at; lock: stay on that level (level practice) instead of advancing. */
-  start(level = 1, lock = false) {
-    this.lock = lock;
+  start(level = 1, lock = false, duel = null) {
+    this.lock = lock || !!duel;
+    this.duel = duel; this.elapsed = 0; this.next = 0; this.firstWordDone = false;
     Object.assign(this, {
       state: 'play', score: 0, level, lives: 3, combo: 0, best: 0, levelHits: 0,
       speed: 14 + (level - 1) * 3 + (LEVELS[level - 1].speed || 0), enemies: [], shots: [], particles: [], flash: null, spawnIn: 0.6,
       recent: [], stats: {}, reactions: [], hits: 0, escapes: 0, last: performance.now(), cannonX: W / 2, cannonTo: W / 2,
-      message: { text: lock ? `PRACTICE: ${LEVELS[level - 1].name.toUpperCase()}` : `LEVEL ${level}`, t: 1.6 },
+      message: { text: duel ? (this.label || 'GO!') : lock ? `PRACTICE: ${LEVELS[level - 1].name.toUpperCase()}` : `LEVEL ${level}`, t: 1.6 },
     });
+    if (duel) this.speed = duel.base;
     this.hud();
     cancelAnimationFrame(this.raf);
     this.raf = requestAnimationFrame(this._tick);
@@ -79,6 +108,7 @@ export class Game {
   stat(L) { return (this.stats[L] ||= { hits: 0, misses: 0, times: [] }); }
 
   pickLetter() {
+    if (this.wordLevel && !this.firstWordDone) { this.firstWordDone = true; return FIRST_WORD; }
     const onScreen = new Set(this.enemies.map((e) => e.word || e.letter));
     const pool = this.letters.filter((L) => !onScreen.has(L));
     const list = pool.length ? pool : this.letters;
@@ -90,14 +120,14 @@ export class Game {
     return list[list.length - 1];
   }
 
-  spawn() {
-    const L = this.pickLetter();
+  spawn(planned = null) {
+    const L = planned ? planned.letter : this.pickLetter();
     const lanes = 5, lw = (W - 20) / lanes;
     const used = new Set(this.enemies.filter((e) => e.y < 60).map((e) => e.lane));
     const free = [...Array(lanes).keys()].filter((i) => !used.has(i));
-    const lane = free.length ? free[Math.floor(Math.random() * free.length)] : Math.floor(Math.random() * lanes);
+    const lane = planned ? planned.lane : free.length ? free[Math.floor(Math.random() * free.length)] : Math.floor(Math.random() * lanes);
     const word = L.length > 1 ? L : null;
-    this.enemies.push({ word, idx: 0, letter: L[0], lane, x: 10 + lw * lane + lw / 2, y: -20, born: performance.now(), wob: Math.random() * 6, color: PAL.block[Math.floor(Math.random() * PAL.block.length)] });
+    this.enemies.push({ word, idx: 0, letter: L[0], lane, x: 10 + lw * lane + lw / 2, y: -20, born: performance.now(), wob: Math.random() * 6, color: PAL.block[planned ? this.next % PAL.block.length : Math.floor(Math.random() * PAL.block.length)] });
   }
 
   /** A sign was held. Shoot the lowest matching letter, if any. */
@@ -141,6 +171,7 @@ export class Game {
   }
 
   outcome(hit) {
+    if (this.duel) return; // 1v1: both players share one fixed speed ramp
     this.recent.push(hit);
     if (this.recent.length > 10) this.recent.shift();
     if (this.recent.length >= 5 && this.recent.length % 5 === 0 || this.recent.length === 10) {
@@ -193,18 +224,28 @@ export class Game {
 
   hud() {
     this.onHud?.({ score: this.score, level: this.level, lives: this.lives, combo: this.combo,
-      mult: Math.min(5, 1 + Math.floor(this.combo / 3)), letters: this.letters, speed: this.speed });
+      mult: Math.min(5, 1 + Math.floor(this.combo / 3)), letters: this.letters, speed: this.speed,
+      timeLeft: this.duel ? Math.max(0, this.duel.duration - this.elapsed) : null });
   }
 
   _tick(now) {
     const dt = Math.min(0.05, (now - this.last) / 1000);
     this.last = now;
     if (this.state !== 'play') return;
-    const maxOnScreen = 2 + this.level;
-    this.spawnIn -= dt;
-    if (this.spawnIn <= 0 && this.enemies.length < maxOnScreen) {
-      this.spawn();
-      this.spawnIn = clamp(110 / this.speed, 1.4, 6);
+    if (this.duel) {
+      const d = this.duel, before = Math.ceil(d.duration - this.elapsed);
+      this.elapsed += dt;
+      this.speed = d.base + this.elapsed * d.ramp;
+      while (this.next < d.schedule.length && d.schedule[this.next].t <= this.elapsed) { this.spawn(d.schedule[this.next]); this.next++; }
+      if (this.elapsed >= d.duration) { this.end(); return; }
+      if (Math.ceil(d.duration - this.elapsed) !== before) this.hud(); // tick the clock once a second
+    } else {
+      const maxOnScreen = 2 + this.level;
+      this.spawnIn -= dt;
+      if (this.spawnIn <= 0 && this.enemies.length < maxOnScreen) {
+        this.spawn();
+        this.spawnIn = clamp(110 / this.speed, 1.4, 6);
+      }
     }
     for (const e of this.enemies) {
       if (e.dead) continue;

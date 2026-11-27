@@ -51,6 +51,17 @@ async def save_round(request: Request):
         return JSONResponse({"saved": False, "error": str(e)[:200]}, status_code=200)
 
 
+@app.post("/api/duels")
+async def save_duel(request: Request):
+    """Signblast 1v1 results -> Snowflake table SIGNBLAST_DUELS."""
+    body = await request.json()
+    try:
+        ok = await asyncio.to_thread(snow.save_duel, body)
+        return {"saved": ok}
+    except Exception as e:  # never break the game over analytics
+        return JSONResponse({"saved": False, "error": str(e)[:200]}, status_code=200)
+
+
 @app.get("/api/rounds/hardest")
 async def hardest():
     rows = await asyncio.to_thread(snow.hardest_letters)

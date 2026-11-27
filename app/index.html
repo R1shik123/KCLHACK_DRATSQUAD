@@ -27,7 +27,7 @@
           <p class="numeral"><span id="home-mastered">0</span><span class="of">/26</span></p>
         </div>
         <div class="chips" aria-label="Course">
-          <span class="chip">ASL alphabet</span><span class="chip">Beginner</span><span class="chip">8 letters</span>
+          <span class="chip">ASL alphabet</span><span class="chip">Beginner</span><span class="chip">26 letters</span>
         </div>
       </div>
       <a class="card hero" href="#play">
@@ -38,7 +38,12 @@
       </a>
       <a class="card link-card" href="#learn">
         <span class="icon-circle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 11V5a1.5 1.5 0 0 1 3 0v5M10 10V3.5a1.5 1.5 0 0 1 3 0V10M13 10V4.5a1.5 1.5 0 0 1 3 0V11M16 11V7.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.5a6 6 0 0 1-5.2-3l-2.6-4.6a1.5 1.5 0 0 1 2.5-1.6L7 13"/></svg></span>
-        <span><span class="link-title">Learn the handshapes</span><span class="link-sub">8 letters, described in plain English, with a camera check</span></span>
+        <span><span class="link-title">Learn the handshapes</span><span class="link-sub">26 letters, described in plain English, with a camera check</span></span>
+        <span class="chev" aria-hidden="true">›</span>
+      </a>
+      <a class="card link-card" href="#duel">
+        <span class="icon-circle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2.5 20a5.5 5.5 0 0 1 11 0M10.5 20a5.5 5.5 0 0 1 11 0"/></svg></span>
+        <span><span class="link-title">1v1 sign duel</span><span class="link-sub">Challenge a friend on one camera: same letters, fastest hands win</span></span>
         <span class="chev" aria-hidden="true">›</span>
       </a>
       <div class="card streak-card">
@@ -133,6 +138,69 @@
       </div>
     </section>
 
+    <!-- 1V1 -->
+    <section class="screen" id="screen-duel" data-screen="duel" aria-labelledby="duel-title" hidden>
+      <header class="hello">
+        <p class="eyebrow">1v1</p>
+        <h1 id="duel-title">Sign duel</h1>
+        <p class="muted">Two players, one camera: Player 1 signs on the left, Player 2 on the right. Same letters at the same moment. Last one standing wins; if time runs out, the higher score wins.</p>
+      </header>
+      <div class="duel-layout" id="duel-layout">
+        <div class="arcade duel">
+          <div class="duel-top" aria-live="polite">
+            <div class="hud duel-hud p1">
+              <div><span>P1</span><b id="d0-score">0</b></div>
+              <div><span>LIVES</span><b id="d0-lives">♥♥♥</b></div>
+              <div><span>COMBO</span><b id="d0-combo">x1</b></div>
+            </div>
+            <div class="hud duel-clock"><div><span>TIME</span><b id="duel-clock">60</b></div></div>
+            <div class="hud duel-hud p2">
+              <div><span>P2</span><b id="d1-score">0</b></div>
+              <div><span>LIVES</span><b id="d1-lives">♥♥♥</b></div>
+              <div><span>COMBO</span><b id="d1-combo">x1</b></div>
+            </div>
+          </div>
+          <div class="duel-boards">
+            <div class="crt"><canvas id="duel-game-0" aria-label="Player 1 game screen"></canvas><div class="scanlines" aria-hidden="true"></div></div>
+            <div class="crt"><canvas id="duel-game-1" aria-label="Player 2 game screen"></canvas><div class="scanlines" aria-hidden="true"></div></div>
+            <div class="overlay duel-overlay" id="duel-overlay">
+              <p class="px big">1V1</p>
+              <p class="px">P1 LEFT · P2 RIGHT</p>
+              <button class="btn arcade-btn" type="button" data-dact="start">PRESS START</button>
+            </div>
+          </div>
+          <div class="hud-actions">
+            <button class="btn hud-btn" id="duel-pause" type="button" disabled>Pause <kbd>P</kbd></button>
+            <button class="btn hud-btn" id="duel-stop" type="button" disabled>Stop</button>
+          </div>
+        </div>
+        <div class="duel-cams">
+          <div class="duel-cam p1">
+            <canvas class="duel-cam-canvas" id="duel-cam-0" aria-label="Player 1 camera: the left half of the view"></canvas>
+            <span class="duel-cam-tag">PLAYER 1</span>
+            <span class="duel-cam-letter" id="d0-seen" aria-label="Player 1 sign">–</span>
+            <i class="duel-cam-hold" id="d0-hold" aria-hidden="true"></i>
+            <div class="cam-off" data-cam-off></div>
+          </div>
+          <div class="duel-cam p2">
+            <canvas class="duel-cam-canvas" id="duel-cam-1" aria-label="Player 2 camera: the right half of the view"></canvas>
+            <span class="duel-cam-tag">PLAYER 2</span>
+            <span class="duel-cam-letter" id="d1-seen" aria-label="Player 2 sign">–</span>
+            <i class="duel-cam-hold" id="d1-hold" aria-hidden="true"></i>
+            <div class="cam-off" data-cam-off></div>
+          </div>
+        </div>
+      </div>
+      <div class="level-pick" id="duel-pick" role="radiogroup" aria-label="Choose duel level">
+        <button type="button" class="lp on" data-lv="1" aria-pressed="true">1 · Starter</button>
+        <button type="button" class="lp" data-lv="2" aria-pressed="false">2 · Open hands</button>
+        <button type="button" class="lp" data-lv="3" aria-pressed="false">3 · Fists</button>
+        <button type="button" class="lp" data-lv="4" aria-pressed="false">4 · A–Z speed</button>
+        <button type="button" class="lp" data-lv="5" aria-pressed="false">5 · Words</button>
+      </div>
+      <p class="kbd-note" id="duel-kbd" hidden>No camera? Letter keys play for Player 1, Shift + letter for Player 2.</p>
+    </section>
+
     <!-- RESULTS -->
     <section class="screen" id="screen-results" data-screen="results" aria-labelledby="results-title" hidden>
       <header class="hello">
@@ -200,6 +268,7 @@
     <a href="#home" data-nav="home" aria-current="page"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span><span>Home</span></a>
     <a href="#learn" data-nav="learn"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5"/></svg></span><span>Learn</span></a>
     <a href="#play" data-nav="play"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></span><span>Play</span></a>
+    <a href="#duel" data-nav="duel"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2.5 20a5.5 5.5 0 0 1 11 0M10.5 20a5.5 5.5 0 0 1 11 0"/></svg></span><span>1v1</span></a>
     <a href="#progress" data-nav="progress"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span>Progress</span></a>
   </nav>
 

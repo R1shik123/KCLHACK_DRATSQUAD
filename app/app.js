@@ -1,6 +1,6 @@
 /* Signfall app shell: routing, storage, camera states, Learn, Play and Progress. */
 import { Recognizer, ALL_LETTERS as LETTERS } from './recognizer.js';
-import { Game, LEVEL_LETTERS, LEVELS } from './game.js';
+import { Game, LEVEL_LETTERS, LEVELS, duelPlan } from './game.js';
 import { Music } from './music.js';
 
 const $ = (id) => document.getElementById(id);
@@ -67,6 +67,7 @@ rec.onState((s, err) => {
     if (s !== 'on') el.innerHTML = camMessages[s](err);
   });
   $('kbd-note').hidden = s === 'on' || s === 'loading';
+  $('duel-kbd').hidden = s === 'on' || s === 'loading';
 });
 document.addEventListener('click', (e) => { if (e.target.closest('[data-cam-on]')) rec.start(); });
 const usePreview = (scope) => { rec.preview = scope?.querySelector('.cam-canvas') || null; };
@@ -142,6 +143,12 @@ rec.onFrame((f) => {
     if (ok && $('check-tick').hidden) { $('check-tick').hidden = false; if (!checkPassed) { markToday(); checkPassed = true; } }
     if (f.letter !== checkTarget) { $('check-tick').hidden = true; checkPassed = false; }
   }
+  if (route === 'duel' && f.split) {
+    f.sides.forEach((x, i) => {
+      $(`d${i}-seen`).textContent = x ? (x.letter || '?') : '–';
+      $(`d${i}-hold`).style.width = `${Math.round((x?.letter ? x.hold : 0) * 100)}%`;
+    });
+  }
   if (route === 'play') {
     $('play-seen').textContent = f.letter || (f.landmarks ? '?' : '–');
     $('play-conf').textContent = f.landmarks ? (f.letter ? `${Math.round(f.confidence * 100)}% · hold ${Math.round(f.hold * 100)}%` : 'Not sure') : 'No hand in view';
@@ -167,7 +174,7 @@ const game = new Game($('game'), {
     // Log the round to Snowflake (server-side, key-pair auth); the app works the same offline.
     fetch('/api/rounds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
       score: r.score, level: r.level, practice: pickLevel || null, accuracy: r.accuracy, avg_ms: r.avgReaction, early: !!r.early,
-      letters: Object.fromEntries(Object.entries(r.stats).map(([L, s]) => [L, { hits: s.hits, misses: s.misses, times: s.times.map(Math.round) }])),
+      letters: lettersPayload(r.stats),
     }) }).catch(() => {});
     for (const [L, s] of Object.entries(r.stats)) {
       const t = (store.letters[L] ||= { hits: 0, misses: 0 });
@@ -180,7 +187,10 @@ const game = new Game($('game'), {
     showGameOver(r);
   },
 });
-document.fonts?.load('16px "Press Start 2P"').then(() => { if (game.state === 'idle') game.drawIdle(); }).catch(() => {});
+const lettersPayload = (stats) => Object.fromEntries(Object.entries(stats).map(([L, s]) => [L, { hits: s.hits, misses: s.misses, times: s.times.map(Math.round) }]));
+document.fonts?.load('16px "Press Start 2P"').then(() => {
+  for (const g of [game, ...duelists]) if (g.state === 'idle') g.drawIdle();
+}).catch(() => {});
 
 const fmtS = (ms) => (ms == null ? '–' : `${(ms / 1000).toFixed(1)}s`);
 const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
@@ -268,6 +278,16 @@ rec.onSign((L, source) => {
   if (route === 'play' && game.state === 'play') game.sign(L);
 });
 window.addEventListener('keydown', (e) => {
+  if (route === 'duel') {
+    if ((e.key === 'Escape' || e.key === 'p' || e.key === 'P') && (duelists[0].state === 'play' || duelists[0].state === 'paused')) {
+      e.preventDefault(); duelists[0].state === 'paused' ? resumeDuel() : pauseDuel(); return;
+    }
+    // No camera: letter keys play for Player 1, Shift + letter for Player 2.
+    if (e.metaKey || e.ctrlKey || e.altKey || rec.state === 'on' || rec.state === 'loading') return;
+    const L = e.key.toUpperCase();
+    if (LETTERS.includes(L)) { e.preventDefault(); rec.emitSideSign(e.shiftKey ? 1 : 0, L); }
+    return;
+  }
   if (route === 'play' && (e.key === 'Escape' || e.key === 'p' || e.key === 'P') && (game.state === 'play' || game.state === 'paused')) {
     e.preventDefault(); game.state === 'paused' ? resumeGame() : pauseGame(); return;
   }
@@ -276,6 +296,115 @@ window.addEventListener('keydown', (e) => {
   const L = e.key.toUpperCase();
   if (LETTERS.includes(L)) { e.preventDefault(); rec.emitSign(L, 'keyboard'); }
 });
+
+// ---------- 1v1 (two players, one camera) ----------
+const duelHud = (i) => (h) => {
+  $(`d${i}-score`).textContent = h.score;
+  $(`d${i}-lives`).textContent = '♥'.repeat(Math.max(0, h.lives)) || '–';
+  $(`d${i}-combo`).textContent = `x${h.mult}`;
+  if (h.timeLeft != null) $('duel-clock').textContent = Math.ceil(h.timeLeft);
+};
+const duelists = [0, 1].map((i) => {
+  const g = new Game($(`duel-game-${i}`), { boxes: {}, sound: blip, onHud: duelHud(i), onEnd: (r) => duelEnded(i, r) });
+  g.label = `PLAYER ${i + 1}`;
+  return g;
+});
+let duelLevel = 1, duelNow = null, duelResults = [null, null], countdown = null;
+const duelLive = () => duelists.some((g) => g.state === 'play' || g.state === 'paused') || countdown != null;
+const duelIntro = () => `<p class="px big">1V1</p><p class="px">P1 LEFT · P2 RIGHT</p><button class="btn arcade-btn" type="button" data-dact="start">PRESS START</button>`;
+function setDuelControls(playing) {
+  $('duel-pause').disabled = !playing; $('duel-stop').disabled = !playing;
+  for (const x of $('duel-pick').children) x.disabled = playing;
+}
+$('duel-pick').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-lv]');
+  if (!b || duelLive()) return;
+  duelLevel = +b.dataset.lv;
+  for (const x of $('duel-pick').children) { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); }
+});
+function startDuel() {
+  if (duelLive()) return;
+  duelResults = [null, null];
+  if (rec.state === 'off') rec.start();
+  rec.setSplit(true);
+  duelNow = duelPlan(duelLevel);
+  duelists.forEach((g, i) => { g.stop(); g.boxes = {}; g.drawIdle(); duelHud(i)({ score: 0, lives: 3, mult: 1, timeLeft: duelNow.duration }); });
+  setDuelControls(true);
+  $('duel-layout').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  let n = 3;
+  const step = () => {
+    if (route !== 'duel') return;
+    if (n > 0) {
+      $('duel-overlay').innerHTML = `<p class="px huge">${n}</p><p class="px">P1 LEFT · P2 RIGHT</p>`;
+      blip('nope'); n--; countdown = setTimeout(step, 800); return;
+    }
+    countdown = null;
+    $('duel-overlay').hidden = true;
+    blip('start');
+    duelists.forEach((g) => g.start(duelLevel, true, duelNow));  // same tick, same plan: identical boards
+    Music.setMuted(!!store.muted); Music.start(duelLevel);
+    $('duel-pause').focus();
+  };
+  $('duel-overlay').hidden = false;
+  step();
+}
+function pauseDuel() {
+  if (!duelists.map((g) => g.pause()).some(Boolean)) return;
+  Music.pause();
+  $('duel-overlay').innerHTML = `<p class="px big">PAUSED</p><div class="btn-row">
+    <button class="btn arcade-btn" type="button" data-dact="resume">RESUME</button>
+    <button class="btn ghost-dark" type="button" data-dact="stop">STOP</button></div>`;
+  $('duel-overlay').hidden = false;
+  $('duel-overlay').querySelector('[data-dact="resume"]').focus();
+}
+function resumeDuel() { $('duel-overlay').hidden = true; duelists.forEach((g) => g.resume()); Music.resume(); }
+/** Stop without a result (leaving the screen, or the Stop button). */
+function abortDuel() {
+  clearTimeout(countdown); countdown = null;
+  const was = duelists.some((g) => g.state !== 'idle' && g.state !== 'over');
+  duelists.forEach((g) => { if (g.state !== 'over') { g.stop(); g.drawIdle(); } });
+  if (was) Music.stop();
+  setDuelControls(false);
+  $('duel-overlay').innerHTML = duelIntro(); $('duel-overlay').hidden = false;
+}
+// Last one standing wins: a knockout ends the duel for both. If the clock runs out, the higher score wins.
+function duelEnded(i, r) {
+  duelResults[i] = r;
+  const other = duelists[1 - i];
+  if (other.state === 'play' || other.state === 'paused') { other.end(true); return; }
+  if (!duelResults[0] || !duelResults[1]) return;
+  const ko = duelists.map((g) => g.lives <= 0);
+  const [a, b] = duelResults;
+  let winner = -1, why = 'same score';
+  if (ko[0] !== ko[1]) { winner = ko[0] ? 1 : 0; why = 'last one standing'; }
+  else if (a.score !== b.score) { winner = a.score > b.score ? 0 : 1; why = ko[0] ? 'double knockout: higher score' : 'time up: higher score'; }
+  Music.stop();
+  markToday();
+  setDuelControls(false);
+  fetch('/api/duels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+    level: duelNow.level, seed: duelNow.seed, winner: winner + 1, reason: why,
+    players: duelResults.map((x, k) => ({ score: x.score, accuracy: x.accuracy, avg_ms: x.avgReaction, ko: ko[k], letters: lettersPayload(x.stats) })),
+  }) }).catch(() => {});
+  const card = (k) => {
+    const x = duelResults[k], att = x.hits + x.escapes;
+    return `<div class="duel-res p${k + 1}${winner === k ? ' win' : ''}"><p class="px">P${k + 1}${winner === k ? ' WINS' : ''}</p><p class="px big">${x.score}</p>
+      <p class="small">${att ? Math.round(100 * x.hits / att) : 0}% · ${x.hits} hit</p>
+      <p class="small">Practise: ${esc(x.toPractise.slice(0, 3).join(' ') || 'nothing missed')}</p></div>`;
+  };
+  $('duel-overlay').innerHTML = `<p class="px big">${winner < 0 ? 'DRAW' : `PLAYER ${winner + 1} WINS`}</p><p class="px">${why.toUpperCase()}</p>
+    <div class="duel-res-row">${card(0)}${card(1)}</div>
+    <button class="btn arcade-btn" type="button" data-dact="start">REMATCH</button>`;
+  $('duel-overlay').hidden = false;
+}
+$('duel-overlay').addEventListener('click', (e) => {
+  const act = e.target.closest('[data-dact]')?.dataset.dact;
+  if (act === 'start') startDuel();
+  if (act === 'resume') resumeDuel();
+  if (act === 'stop') abortDuel();
+});
+$('duel-pause').addEventListener('click', () => (duelists[0].state === 'paused' ? resumeDuel() : pauseDuel()));
+$('duel-stop').addEventListener('click', abortDuel);
+rec.onSideSign((side, L) => { if (route === 'duel' && duelists[side].state === 'play') duelists[side].sign(L); });
 
 // ---------- Progress ----------
 function renderProgress() {
@@ -294,7 +423,7 @@ function renderProgress() {
   const tot = Object.values(store.letters).reduce((a, s) => [a[0] + s.hits, a[1] + s.misses], [0, 0]);
   $('st-acc').textContent = tot[0] + tot[1] ? `${Math.round(100 * tot[0] / (tot[0] + tot[1]))}%` : '–';
   $('st-best').textContent = store.games ? store.best : '–';
-  $('st-mastered').innerHTML = `${mastered()}<span class="of">/8</span>`;
+  $('st-mastered').innerHTML = `${mastered()}<span class="of">/26</span>`;
   $('st-react').textContent = store.reactions.length ? `${(store.reactions.reduce((a, b) => a + b, 0) / store.reactions.length / 1000).toFixed(1)}s` : '–';
   $('bars').innerHTML = LETTERS.map((L) => {
     const box = store.boxes[L] || 0, s = store.letters[L];
@@ -320,7 +449,7 @@ $('reset-progress').addEventListener('click', () => {
 
 // ---------- routing ----------
 let route = 'home';
-const SCREENS = ['home', 'learn', 'play', 'results', 'progress'];
+const SCREENS = ['home', 'learn', 'play', 'results', 'progress', 'duel'];
 function go() {
   const r = location.hash.slice(1);
   route = SCREENS.includes(r) ? r : 'home';
@@ -329,10 +458,15 @@ function go() {
     if (a.dataset.nav === route) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
   if (route !== 'play' && game.state === 'play') pauseGame();
+  if (route !== 'duel' && duelLive()) abortDuel();
+  rec.setSplit(route === 'duel');
+  rec.setWide(route === 'duel');
+  rec.sidePreviews = route === 'duel' ? [$('duel-cam-0'), $('duel-cam-1')] : null;
   document.querySelectorAll('[data-nav]').forEach((a) => { if (route === 'results' && a.dataset.nav === 'play') a.setAttribute('aria-current', 'page'); });
   if (route === 'home') renderHome();
   if (route === 'learn') { renderLearn(); usePreview(checkTarget ? $('check') : null); if (learnFocus.length) { setTimeout(() => document.querySelector('.letter-card.focus')?.scrollIntoView({ block: 'center' }), 50); } }
   if (route === 'play') usePreview($('screen-play'));
+  if (route === 'duel') usePreview(null);
   if (route === 'progress') renderProgress();
   if (route === 'home' || route === 'progress' || route === 'results') rec.stop();
   window.scrollTo(0, 0);
