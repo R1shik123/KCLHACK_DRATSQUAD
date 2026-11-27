@@ -4,6 +4,7 @@ import { Sprint, Spell, Echo, Mystery, Duel, dailyWords } from "./games.js";
 import { store, todayKey } from "./store.js";
 import { icon } from "./icons.js";
 import { EchoLevel, EchoRun, echoPools, echoStars, echoHighest, echoTotalStars } from "./echo.js";
+import { Blast, BLAST_LEVELS } from "./blast.js";
 
 const load = (p) => fetch(p, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(p); return r.json(); });
 const [C, RCFG, HS, WL, TOK] = await Promise.all([
@@ -28,6 +29,7 @@ const GAMES = {
   spell:    { icon: "type",        best: true },
   echo:     { icon: "repeat",      best: true },
   mystery:  { icon: "circle-help", best: true },
+  blast:    { icon: "rocket",      best: true },
   duel:     { icon: "swords",      best: false, camera: true },
   practice: { icon: "target",      best: false },
   daily:    { icon: "calendar",    best: false },
@@ -39,6 +41,7 @@ let pending = null;     // { id, opts } waiting to start
 let lastResult = null;
 let practiceLetters = new Set(ALPHA);
 let sprintAll = false;
+let blastLevel = 1;
 
 document.getElementById("settings-btn").innerHTML = icon("settings");
 {
@@ -123,7 +126,7 @@ function startGame(id, opts = {}) {
 function Home() {
   const days = store.streakDays();
   const daily = store.data.daily[todayKey()];
-  const order = ["sprint", "spell", "echo", "mystery", "duel", "practice"];
+  const order = ["sprint", "spell", "echo", "mystery", "blast", "duel", "practice"];
   const demoWord = C.home.demoWord;
   view.innerHTML = `<section class="screen wide">
     <div class="hero-wrap"><div class="hero">
@@ -208,6 +211,7 @@ function GameIntro(id) {
     <div class="section"><p class="eyebrow">${esc(G.rules)}</p>
       <ol class="rules">${g.rules.map((r, i) => `<li><span class="n">${i + 1}</span><span>${esc(r)}</span></li>`).join("")}</ol></div>
     ${id === "sprint" ? `<div class="opt-row"><span class="t-headline">${esc(G.allLetters)}</span><span class="seg" id="pool"><button type="button" data-v="0" aria-pressed="${!sprintAll}">${esc(C.settings.off)}</button><button type="button" data-v="1" aria-pressed="${sprintAll}">${esc(C.settings.on)}</button></span></div>` : ""}
+    ${id === "blast" ? `<div class="opt-row"><span class="t-headline">${esc(C.blast.startLevel)}</span><span class="seg" id="lvl">${BLAST_LEVELS.map((_, i) => `<button type="button" data-v="${i + 1}" aria-pressed="${blastLevel === i + 1}" title="${esc(C.blast.levels[i])}">${i + 1}</button>`).join("")}</span></div>` : ""}
     ${id === "duel" ? `<p class="t-footnote muted">${esc(G.duelNeedCamera)} ${esc(G.duelKeys)}</p>` : ""}
     <div ${gameAttr(id)}><button class="btn primary" id="go">${icon("play")}${esc(G.start)}</button></div>
   </section>`;
@@ -216,7 +220,12 @@ function GameIntro(id) {
     sprintAll = b.dataset.v === "1";
     $("#pool").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
   });
-  $("#go").onclick = () => startGame(id, id === "sprint" ? { allLetters: sprintAll } : {});
+  $("#lvl")?.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    blastLevel = +b.dataset.v;
+    $("#lvl").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  });
+  $("#go").onclick = () => startGame(id, id === "sprint" ? { allLetters: sprintAll } : id === "blast" ? { level: blastLevel } : {});
 }
 
 // ---------- S2 Camera setup ----------
@@ -266,6 +275,7 @@ function PracticeSetup() {
 // ---------- S4 Run a game (+ P1 Pause sheet) ----------
 function Run(id) {
   if (!pending || pending.id !== id) { location.hash = GAMES[id] ? `#game-${id}` : "#play"; return; }
+  if (id === "blast") { BlastPlay(pending.opts); return; }
   const { opts } = pending;
   let keyboard = store.data.input !== "camera";
   let paused = false, finished = false, raf = 0, last = performance.now(), flashT = 0;
@@ -457,7 +467,7 @@ function Results() {
   if (!r) { location.hash = "#play"; return; }
   const id = r.id;
   const LABEL = { hits: C.results.letters, bestCombo: G.combo, avgMs: C.progress.avgTime, words: C.results.words, letters: C.results.letters,
-    accuracy: C.results.accuracy, length: G.echoLength, peeks: G.echoPeek, solved: G.mysteryCount, score: G.score, lives: G.mysteryLives, p1: G.duelP1, p2: G.duelP2 };
+    accuracy: C.results.accuracy, length: G.echoLength, peeks: G.echoPeek, solved: G.mysteryCount, score: G.score, lives: G.mysteryLives, p1: G.duelP1, p2: G.duelP2, level: C.blast.level, escapes: C.blast.escaped };
   const val = (k, v) => v === null || v === undefined ? "–" : k === "avgMs" ? (v / 1000).toFixed(1) + "s" : v;
   const isDaily = id === "daily";
   const title = id === "duel" ? (r.winner ? tx(G.duelWins, { player: r.winner === "left" ? G.duelP1 : G.duelP2 }) : G.duelDraw) : isDaily ? C.results.dailyTitle : null;
@@ -753,6 +763,92 @@ function EchoPlay(arg) {
     });
   }
   draw();
+}
+
+// ---------- Signblast (the original falling-letters shooter, web/js/blast.js) ----------
+function BlastPlay(opts = {}) {
+  const B = C.blast;
+  let keyboard = store.data.input !== "camera", finished = false, paused = false;
+  view.innerHTML = `<section class="screen blast-screen" ${gameAttr("blast")}>
+    <div class="play-bar">
+      <span class="title"><span class="badge-icon grad">${icon("rocket")}</span><span class="t-headline">${esc(gameTitle("blast"))}</span></span>
+      <div class="right"><span class="hearts" id="lives"></span><button class="icon-btn" id="pause" aria-label="${esc(C.play.pause)}">${icon("pause")}</button></div>
+    </div>
+    <div class="blast-grid">
+      <div class="blast-board"><canvas id="board" aria-label="${esc(B.boardLabel)}"></canvas></div>
+      <div class="blast-side">
+        <div class="blast-hud">${chip("b-score", 0, G.score, "accent")}${chip("b-level", opts.level || 1, B.level)}${chip("b-mult", "×1", G.multiplier)}</div>
+        <div class="cam" id="cam"><div class="placeholder" id="ph"></div><span class="status" id="status" hidden></span></div>
+        <p class="t-footnote muted">${esc(keyboard ? B.tipKeys : B.tipCamera)}</p>
+      </div>
+    </div>
+  </section>`;
+  const status = $("#status"), ph = $("#ph");
+  const game = new Blast($("#board"), {
+    box: (L) => store.box(L), setBox: (L, n) => store.setBox(L, n),
+    hint: (L) => (HS.letters[L]?.short || "").toUpperCase(), T: B,
+    sound: (k) => beep({ hit: [880], nope: [220], miss: [196, 147], level: [660, 880, 1100], over: [440, 330, 220] }[k] || [440]),
+    onHud: (h) => {
+      if (finished) return;
+      $("#b-score").textContent = h.score; $("#b-level").textContent = h.level; $("#b-mult").textContent = `×${h.mult}`;
+      $("#lives").innerHTML = [0, 1, 2].map((i) => `<span class="${i < h.lives ? "full" : "lost"}">${icon("heart")}</span>`).join("");
+    },
+    onEnd: (r) => {
+      finished = true; rec.stop();
+      const acc = r.accuracy === null ? null : Math.round(r.accuracy * 100) + "%";
+      const { newBest } = store.recordGame({ mode: "blast", score: r.score, letters: r.hits, accuracy: r.accuracy });
+      lastResult = { id: "blast", score: r.score, newBest, practise: r.toPractise, lines: [],
+        stats: [["level", r.level], ["hits", r.hits], ["bestCombo", r.bestCombo], ["accuracy", acc], ["avgMs", r.avgMs]] };
+      setTimeout(() => { if (location.hash === "#run-blast") location.hash = "#results"; }, 900);
+    },
+  });
+
+  async function pause() {
+    if (finished || paused || !game.pause()) return;
+    paused = true;
+    const v = await sheet({ title: C.play.paused, actions: [
+      { label: C.play.resume, kind: "primary", value: "resume", cancel: true },
+      { label: C.play.end, kind: "text", value: "end" },
+    ] });
+    paused = false;
+    if (v === "end") game.end(); else game.resume();
+  }
+  $("#pause").onclick = pause;
+  const onVis = () => { if (document.hidden) pause(); };
+  document.addEventListener("visibilitychange", onVis);
+
+  // input: keyboard (A–Z) or the camera's 8-frame hold, same as every game
+  const onKey = (e) => {
+    if (e.key === "Escape" || e.key === " ") { e.preventDefault(); pause(); return; }
+    if (!keyboard || finished || paused || e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toUpperCase();
+    if (k.length === 1 && k >= "A" && k <= "Z") { e.preventDefault(); game.sign(k); }
+  };
+  document.addEventListener("keydown", onKey);
+  const hold = new HoldTracker(RCFG.stableFrames, RCFG.rearmFrames);
+  const setStatus = (html) => { status.hidden = !html; status.innerHTML = html || ""; };
+  const off = rec.onFrame((f) => {
+    if (keyboard || finished || paused) { hold.reset(); return; }
+    const r = hold.push(f.letter);
+    if (!f.hand) setStatus(esc(C.camera.noHand));
+    else if (r.letter) { setStatus(`<span class="sig">${r.letter}${ringSvg()}</span>`); setRing(status.querySelector(".sig"), r.progress); }
+    else setStatus("");
+    if (r.fired) game.sign(r.fired);
+  });
+  onLeave(() => { finished = true; game.stop(); off(); document.removeEventListener("keydown", onKey); document.removeEventListener("visibilitychange", onVis); rec.stop(); });
+
+  ph.innerHTML = keyboard ? `${icon("keyboard")}<span class="t-subhead">${esc(C.camera.keyboardOn)}</span>` : `${icon("camera")}<span class="t-subhead">${esc(C.camera.loading)}</span>`;
+  if (!keyboard) {
+    rec.mount($("#cam"));
+    rec.start().then((s) => {
+      if (finished) return;
+      if (s === "on") { ph.innerHTML = ""; setStatus(esc(C.camera.noHand)); }
+      else { keyboard = true; ph.innerHTML = `${icon("keyboard")}<span class="t-subhead">${esc(C.camera.keyboardOn)}</span>`; toast(s === "denied" ? C.camera.denied : C.camera.unavailable); }
+    });
+  }
+  // The pixel font must be ready before the canvas draws letters; don't wait more than a second for it.
+  Promise.race([document.fonts?.load('12px "Press Start 2P"'), new Promise((r) => setTimeout(r, 1000))]).catch(() => {})
+    .then(() => { if (!finished) game.start(Math.min(BLAST_LEVELS.length, Math.max(1, opts.level || 1))); });
 }
 
 // ---------- Motion layer: bursts, count-up, spotlight, tilt, scroll reveal ----------

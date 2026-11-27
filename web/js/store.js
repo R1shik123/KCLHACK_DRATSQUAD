@@ -10,7 +10,7 @@ const blank = () => ({
   accent: "blue",       // key of tokens.json → accents
   boxes: {},
   streak: { days: 0, lastPlayed: null },
-  best: {},             // per game id: sprint, spell, echo, mystery
+  best: {},             // per game id: sprint, spell, echo, mystery, blast
   daily: {},
   calibration: {},      // letter → array of 6-number feature vectors (personal model)
   history: [],
@@ -58,7 +58,7 @@ export const store = {
       s.lastPlayed = today;
     }
     let newBest = false;
-    if (["sprint", "spell", "echo", "mystery"].includes(r.mode) && r.score > this.best(r.mode)) { data.best[r.mode] = r.score; newBest = r.score > 0; }
+    if (["sprint", "spell", "echo", "mystery", "blast"].includes(r.mode) && r.score > this.best(r.mode)) { data.best[r.mode] = r.score; newBest = r.score > 0; }
     if (r.mode === "daily") data.daily[today] = { score: r.score, timeMs: r.timeMs };
     data.history.push({ date: today, mode: r.mode, score: r.score, letters: r.letters || 0, accuracy: r.accuracy ?? null });
     if (data.history.length > 400) data.history = data.history.slice(-400);
