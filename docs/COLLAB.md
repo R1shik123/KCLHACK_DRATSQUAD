@@ -1,6 +1,8 @@
 # Working together: website Claude + app Claude
 
-Two Claude sessions build Signblast in this one repo: one builds the **website**, the other builds the **app**.
+Two Claude sessions build Sign Max in this one repo: one builds the **website**, the other builds the **app**.
+**The website is the main project** (the human's decision, 2026-11-27): it owns the UI, and the website side pulls the app's new
+games and features into `web/` regularly. The app side owns game logic and specs new games in `docs/PRODUCT.md`.
 They never talk directly. **The repo is the only channel**, so everything below is about keeping it clear.
 
 ## Read these at the start of every session, in this order

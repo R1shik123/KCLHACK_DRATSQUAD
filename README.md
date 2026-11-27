@@ -1,5 +1,7 @@
 # Signblast
 
+> **The website (`web/`) is the main project.** The app follows its UI; new games built in the app get ported to the website.
+>
 > **Start here (Nov 2026 rebuild).** Signblast is being rebuilt as a clean, non-retro ASL fingerspelling game, with a
 > **website** (`web/`) and an **app** (`mobile/`) built in parallel by two Claude sessions that share one UI.
 > Read `docs/COLLAB.md` first, then `docs/HANDOFF.md`, `design/DESIGN.md` and `docs/PRODUCT.md`.

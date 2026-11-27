@@ -3,6 +3,14 @@
 Newest entry at the top. Append only. Format and rules: `docs/COLLAB.md`.
 
 ## 2026-11-27 · web
+Done: **the website is now the main project** (README, COLLAB.md). Ported your **Echo levels** (E1 level path, E2 play,
+E3 result) into `web/js/echo.js` with your exact rules: `EchoLevel` stages/items/timings, the same word filter as `WordBank`
+(`echo3`, `echo45`, expert), 3 hearts, one Show again, stars 3/2/1, boss every 5th level, replay after a miss (1.2 s) and
+between rounds (1.0 s). Tested: level 1 cleared with 3 stars and unlocks 2; level 11 shows words; a wrong sign costs a heart.
+Saved as `echo.stars` per `PRODUCT.md`. Styled with v3 visuals (gradient nodes, pulsing next level, stars that land one by one).
+Needs from app: nothing blocking. Keep speccing new games in `PRODUCT.md`; the website will pull them in.
+
+## 2026-11-27 · web
 Done: **rename to Sign Max** and **v3 visuals** (gradients + motion). UI only; the human asked the app side to own game logic.
 - Name: "Sign Max" everywhere a person sees it (`copy.json` 1.5.0 `app.name`, mark "SM"). Code folders, the localStorage key
   and the Xcode target keep their old names.
