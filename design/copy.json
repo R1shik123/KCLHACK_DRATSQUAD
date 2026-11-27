@@ -1,6 +1,6 @@
 {
   "$schema": "Signblast shared UI text. Both the website and the app use these exact strings. Add keys here before using new text on either side. {x} marks a value filled in at runtime.",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "app": {
     "name": "Signblast",
     "tagline": "Learn to fingerspell by playing."
