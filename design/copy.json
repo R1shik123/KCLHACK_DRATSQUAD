@@ -1,0 +1,91 @@
+{
+  "$schema": "Signblast shared UI text. Both the website and the app use these exact strings. Add keys here before using new text on either side.",
+  "version": "1.0.0",
+
+  "app": {
+    "name": "Signblast",
+    "tagline": "Learn to fingerspell by playing."
+  },
+
+  "tabs": {
+    "play": "Play",
+    "learn": "Learn",
+    "progress": "Progress"
+  },
+
+  "home": {
+    "eyebrow": "ASL fingerspelling",
+    "title": "Spell with your hands.",
+    "body": "A word appears. Sign each letter to the camera. The faster you spell, the higher you score.",
+    "primary": "Start sprint",
+    "secondary": "Today's five"
+  },
+
+  "modes": {
+    "sprint":   { "title": "Sprint",      "body": "60 seconds. Spell as many words as you can." },
+    "daily":    { "title": "Today's five", "body": "The same five words for everyone, once a day." },
+    "practice": { "title": "Practice",    "body": "Pick your letters. No timer, hints on." }
+  },
+
+  "camera": {
+    "title": "Turn on your camera",
+    "body": "Signblast reads your hand shape on this device. Video never leaves it.",
+    "primary": "Allow camera",
+    "denied": "Camera is blocked. Allow it in your settings, or practise with the keyboard.",
+    "keyboard": "Use keyboard instead",
+    "noHand": "Show one hand to the camera",
+    "holding": "Hold it"
+  },
+
+  "play": {
+    "eyebrow": "Spell",
+    "hint": "Show hint",
+    "skip": "Skip",
+    "pause": "Pause",
+    "resume": "Resume",
+    "end": "End game",
+    "wordDone": "Nice.",
+    "timeUp": "Time's up"
+  },
+
+  "results": {
+    "eyebrow": "Results",
+    "score": "Score",
+    "words": "Words",
+    "letters": "Letters",
+    "accuracy": "Accuracy",
+    "best": "New best",
+    "hardest": "Practise next",
+    "again": "Play again",
+    "home": "Done"
+  },
+
+  "learn": {
+    "eyebrow": "Alphabet",
+    "title": "26 handshapes",
+    "body": "Tap a letter to see how it's made, then check your sign with the camera.",
+    "check": "Check my sign",
+    "mastered": "Mastered",
+    "beta": "Still learning to read this one"
+  },
+
+  "progress": {
+    "eyebrow": "Progress",
+    "title": "Your week",
+    "streak": "Day streak",
+    "mastered": "Letters mastered",
+    "bestSprint": "Best sprint",
+    "avgTime": "Average sign time"
+  },
+
+  "settings": {
+    "title": "Settings",
+    "hand": "Signing hand",
+    "handLeft": "Left",
+    "handRight": "Right",
+    "sound": "Sound",
+    "reset": "Reset progress",
+    "resetConfirm": "This clears your streak and mastery on this device.",
+    "privacy": "Hand tracking runs on your device. Nothing is uploaded."
+  }
+}
