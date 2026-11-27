@@ -22,7 +22,7 @@ const type = Object.entries(t.type).map(([k, v]) => [
 ].join("\n")).join("\n");
 
 const scalar = (prefix, obj) => Object.entries(obj).map(([k, v]) => `  --${prefix}-${kebab(k)}: ${typeof v === "number" ? px(v) : v};`).join("\n");
-const s = t.shadow.card;
+const sh = (mode) => Object.entries(t.shadow[mode]).map(([k, v]) => `  --shadow-${k}: ${v};`).join("\n");
 
 const css = `/* GENERATED from design/tokens.json by design/build-tokens.mjs. Do not edit by hand. Tokens v${t.version} */
 :root {
@@ -34,7 +34,8 @@ ${scalar("space", t.space)}
 ${scalar("radius", t.radius)}
 ${scalar("size", Object.fromEntries(Object.entries(t.size).filter(([, v]) => typeof v === "number" && !String(v).includes("."))))}
   --size-icon-stroke: ${t.size.iconStroke};
-  --shadow-card: ${s.x}px ${s.y}px ${s.blur}px ${s.color};
+${sh("light")}
+  --shadow-card: var(--shadow-sm);
   --ease: ${t.motion.easing};
   --dur-fast: ${t.motion.fast}ms;
   --dur-base: ${t.motion.base}ms;
@@ -44,11 +45,13 @@ ${scalar("size", Object.fromEntries(Object.entries(t.size).filter(([, v]) => typ
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 ${colors(t.color.dark).replace(/^/gm, "  ")}
+${sh("dark").replace(/^/gm, "  ")}
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
 ${colors(t.color.dark)}
+${sh("dark")}
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }

@@ -19,7 +19,7 @@
   "home": {
     "eyebrow": "ASL fingerspelling",
     "title": "Spell with your hands.",
-    "body": "A word appears. Sign each letter to the camera. The faster you spell, the higher you score.",
+    "body": "Seven quick games that read your hand through the camera. Spell words, chase combos, and watch your alphabet fill in.",
     "primary": "Start sprint",
     "secondary": "Today's five",
     "streak": "{n} day streak",
@@ -28,7 +28,14 @@
     "gamesTitle": "Games",
     "featured": "Today",
     "best": "Best {score}",
-    "new": "New"
+    "new": "New",
+    "titleSoft": "Learn ASL by playing.",
+    "ctaLearn": "Learn the alphabet",
+    "note": "Hand tracking runs on your device",
+    "factLetters": "Handshapes",
+    "factGames": "Games",
+    "factUploads": "Video uploaded",
+    "demoWord": "SIGN"
   },
   "modes": {
     "sprint": {
@@ -280,5 +287,10 @@
     "duelKeys": "Keyboard: Player 1 types the letter, Player 2 holds Shift",
     "allLetters": "All 26 letters",
     "reliableLetters": "Reliable letters only"
+  },
+  "footer": {
+    "tagline": "Learn ASL fingerspelling by playing. Hand tracking runs on your device.",
+    "alphabet": "Alphabet",
+    "github": "GitHub"
   }
 }

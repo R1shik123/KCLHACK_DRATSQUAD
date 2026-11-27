@@ -25,6 +25,23 @@ Based on the **Apple Human Interface** recipe from garden-skills (`web-design-en
 - **Space does the work.** Elevation comes from whitespace and the soft-grey surface, not borders or shadows.
 - **Quiet motion.** Expo-out easing, nothing bouncy, nothing that moves more than it needs to.
 
+## 1b. v2 look (tokens 2.0): canvas and cards
+The first version looked flat. v2 is what both platforms build now:
+- **Canvas + cards.** The page (`bg`) is soft grey (#F5F5F7) in light mode and black in dark. Content sits on white `surface`
+  cards that float on it. Inset areas inside a card (stat chips, the camera frame, segmented tracks, Echo slots) use the new
+  `fill` role (#EFEFF3 / #26262B).
+- **Layered shadows** (`tokens.json → shadow`): `sm` for resting cards, `md` for hover / raised panels / the game stage,
+  `lg` for the hero demo, sheets and toasts. Dark mode replaces drop shadows with a hairline ring + a 1px top highlight.
+  Accent things (primary button, featured card, lit Echo letter, week bars) get a soft glow in their own accent colour.
+- **Bigger radii:** 14 / 20 / 28, pills for buttons. **Tighter type:** new `hero` style (56, 80 on desktop, 44 on small phones,
+  −0.04em), headlines at −0.02em.
+- **Hover lift:** cards rise 2–3px and step from `sm` to `md` shadow. Press = scale 0.97–0.985.
+- **Home is a product page:** hero (note chip, two-line headline with the second line `muted`, body, Start sprint + Learn the
+  alphabet), a live demo card that spells SIGN with the hold ring, a 3-fact strip, the Today's five featured card, the games
+  grid, and a site footer. A faint radial `accentSoft` aura sits behind the hero (the only gradient).
+- **Navigation:** brand mark (accent squircle with "S") + name; tabs in a pill-shaped segmented track with a raised active tab.
+- **Game screens:** the game sits in one raised white **stage** card (`md` shadow): stat chips, game area, flash line, camera, buttons.
+
 ## 2. Colour
 Use roles, never raw hex. Names match `tokens.json` → `color.light` / `color.dark`.
 
@@ -109,6 +126,11 @@ Build these once per platform, with these names, so both codebases speak the sam
 | **Mystery word** | One underlined box per letter, filled letters get an `accent` underline. Clue pill (`accentSoft`), 6 hearts, tried letters struck through |
 | **Duel score** | Two `surface` panels (Player 1 left, Player 2 right); the one that just scored gets `accentSoft`. A white divider splits the camera |
 | **Swatches** | Settings accent picker: 32px circles, selected one gets a 2px ring in its own colour |
+| **Stage** | The raised white card a game is played in. `surface`, `lg` radius, `md` shadow, 24 padding (16 on phones) |
+| **Demo card** | Home hero only: `surface`, radius 32, `lg` shadow, slight −1.2° tilt on desktop. Mini Spell It round on a loop |
+| **Fact** | Home 3-up strip: `surface` card, `sm` shadow, value in `title1`, label in `footnote` |
+| **Score card** | Results: `surface`, `md` shadow, eyebrow, the score in `display` (104 on desktop), New best badge, faint accent aura |
+| **Site footer** | Website only: brand, one-line tagline, links (Alphabet, Progress, Settings, GitHub). Hidden during games |
 | **Toast** | `surfaceHigh`, `md` radius, `card` shadow, `subhead` text, bottom centre, 2.5s |
 | **Sheet / dialog** | `surfaceHigh`, `lg` top radius, `overlay` behind. Used for Pause and Reset confirmation |
 

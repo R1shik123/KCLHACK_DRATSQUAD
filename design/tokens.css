@@ -1,12 +1,13 @@
-/* GENERATED from design/tokens.json by design/build-tokens.mjs. Do not edit by hand. Tokens v1.1.0 */
+/* GENERATED from design/tokens.json by design/build-tokens.mjs. Do not edit by hand. Tokens v2.0.0 */
 :root {
   color-scheme: light;
-  --color-bg: #FFFFFF;
-  --color-surface: #F5F5F7;
+  --color-bg: #F5F5F7;
+  --color-surface: #FFFFFF;
   --color-surface-high: #FFFFFF;
+  --color-fill: #EFEFF3;
   --color-ink: #1D1D1F;
-  --color-muted: #86868B;
-  --color-hairline: #D2D2D7;
+  --color-muted: #6E6E73;
+  --color-hairline: #E3E3E8;
   --color-accent: #0071E3;
   --color-accent-ink: #FFFFFF;
   --color-success: #248A3D;
@@ -14,22 +15,26 @@
   --color-danger: #D70015;
   --color-overlay: rgba(0, 0, 0, 0.40);
   --font: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --type-hero-size: 56px;
+  --type-hero-line: 58px;
+  --type-hero-weight: 600;
+  --type-hero-tracking: -0.04em;
   --type-display-size: 64px;
   --type-display-line: 68px;
   --type-display-weight: 600;
-  --type-display-tracking: -0.02em;
-  --type-large-title-size: 34px;
-  --type-large-title-line: 41px;
+  --type-display-tracking: -0.03em;
+  --type-large-title-size: 36px;
+  --type-large-title-line: 40px;
   --type-large-title-weight: 600;
-  --type-large-title-tracking: -0.01em;
+  --type-large-title-tracking: -0.025em;
   --type-title1-size: 28px;
   --type-title1-line: 34px;
   --type-title1-weight: 600;
-  --type-title1-tracking: -0.01em;
+  --type-title1-tracking: -0.02em;
   --type-title2-size: 22px;
   --type-title2-line: 28px;
   --type-title2-weight: 600;
-  --type-title2-tracking: 0em;
+  --type-title2-tracking: -0.01em;
   --type-headline-size: 17px;
   --type-headline-line: 22px;
   --type-headline-weight: 600;
@@ -62,11 +67,11 @@
   --space-xl: 64px;
   --space-xxl: 96px;
   --space-xxxl: 160px;
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 22px;
+  --radius-sm: 14px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
   --radius-pill: 999px;
-  --size-button: 50px;
+  --size-button: 48px;
   --size-button-small: 36px;
   --size-row: 56px;
   --size-tab-bar: 56px;
@@ -76,7 +81,10 @@
   --size-play-max: 560px;
   --size-min-tap: 44px;
   --size-icon-stroke: 1.75;
-  --shadow-card: 0px 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 0.5px 1px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 10px -4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 16px -4px rgba(0, 0, 0, 0.08), 0 18px 36px -18px rgba(0, 0, 0, 0.14);
+  --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.04), 0 14px 30px -8px rgba(0, 0, 0, 0.10), 0 40px 80px -30px rgba(0, 0, 0, 0.22);
+  --shadow-card: var(--shadow-sm);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 200ms;
   --dur-base: 350ms;
@@ -86,33 +94,41 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
     --color-bg: #000000;
-    --color-surface: #1C1C1E;
-    --color-surface-high: #2C2C2E;
+    --color-surface: #161618;
+    --color-surface-high: #232326;
+    --color-fill: #26262B;
     --color-ink: #F5F5F7;
-    --color-muted: #98989D;
-    --color-hairline: #38383A;
+    --color-muted: #8E8E93;
+    --color-hairline: #2C2C30;
     --color-accent: #0A84FF;
     --color-accent-ink: #FFFFFF;
     --color-success: #30D158;
     --color-success-fill: #30D158;
     --color-danger: #FF453A;
     --color-overlay: rgba(0, 0, 0, 0.60);
+    --shadow-sm: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.06), 0 2px 6px rgba(0, 0, 0, 0.5);
+    --shadow-md: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 0 0 1px rgba(255, 255, 255, 0.08), 0 10px 30px rgba(0, 0, 0, 0.6);
+    --shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.09), 0 30px 80px rgba(0, 0, 0, 0.7);
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
   --color-bg: #000000;
-  --color-surface: #1C1C1E;
-  --color-surface-high: #2C2C2E;
+  --color-surface: #161618;
+  --color-surface-high: #232326;
+  --color-fill: #26262B;
   --color-ink: #F5F5F7;
-  --color-muted: #98989D;
-  --color-hairline: #38383A;
+  --color-muted: #8E8E93;
+  --color-hairline: #2C2C30;
   --color-accent: #0A84FF;
   --color-accent-ink: #FFFFFF;
   --color-success: #30D158;
   --color-success-fill: #30D158;
   --color-danger: #FF453A;
   --color-overlay: rgba(0, 0, 0, 0.60);
+  --shadow-sm: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.06), 0 2px 6px rgba(0, 0, 0, 0.5);
+  --shadow-md: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 0 0 1px rgba(255, 255, 255, 0.08), 0 10px 30px rgba(0, 0, 0, 0.6);
+  --shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.09), 0 30px 80px rgba(0, 0, 0, 0.7);
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
