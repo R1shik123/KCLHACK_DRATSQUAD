@@ -1,0 +1,41 @@
+# Publishes the Signblast website (web/ + design/) to GitHub Pages on every push to main.
+# One-time setup: repo Settings → Pages → Source: "GitHub Actions". Custom domain: see docs/DEPLOY.md.
+name: Deploy website
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "design/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build site
+        run: |
+          mkdir -p _site/design
+          cp -r web/. _site/
+          cp design/tokens.css design/*.json _site/design/
+          # Locally the site lives in web/ and loads ../design/. On Pages it's the site root, so design/ sits beside it.
+          sed -i 's#\.\./design/#design/#g' _site/index.html _site/js/*.js
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
